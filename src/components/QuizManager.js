@@ -1,110 +1,99 @@
-
-import React, { useState, useEffect } from 'react';
-import { Typography, Button, TextField, MenuItem, Select, InputLabel, FormControl } from '@mui/material';
+import React, { useEffect, useState } from 'react';
+import { Box, Typography, TextField, Button, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
 import api from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 
-export default function QuizCSVUpload() {
+export default function AdminQuizUpload() {
   const { token } = useAuth();
-  const [file, setFile] = useState(null);
   const [courses, setCourses] = useState([]);
+  const [courseId, setCourseId] = useState('');
   const [courseName, setCourseName] = useState('');
   const [passPercentage, setPassPercentage] = useState(60);
-  const [durationMinutes, setDurationMinutes] = useState(0); // 0 = no limit
-  const [loading, setLoading] = useState(false);
+  const [durationMinutes, setDurationMinutes] = useState(0);
+  const [file, setFile] = useState(null);
 
   useEffect(() => {
-    const fetchCourses = async () => {
-      try {
-        const res = await api.get('/course'); 
-        setCourses(res.data);
-      } catch (err) {
-        console.error(err);
-      }
-    };
-    fetchCourses();
-  }, []);
+    api.get('/course', {
+      headers: { Authorization: `Bearer ${token}` }
+    }).then(res => setCourses(res.data || []));
+  }, [token]);
 
-  const onFileChange = (e) => {
-    const f = e.target.files[0];
-    if (!f) return;
-    const ext = f.name.split('.').pop().toLowerCase();
-    if (ext !== 'csv') {
-      alert('Please upload a CSV file only.');
-      e.target.value = null;
-      return;
-    }
-    setFile(f);
-  };
+  const handleSubmit = async () => {
+    if (!file) return alert('Please select a CSV file');
+    if (!courseName && !courseId) return alert('Pick a course or type course name');
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!file || !courseName) return alert('Please fill in required fields.');
+    const fd = new FormData();
+    if (courseId) fd.append('courseId', courseId);
+    if (courseName) fd.append('courseName', courseName);
+    fd.append('passPercentage', passPercentage);
+    fd.append('durationMinutes', durationMinutes);
+    fd.append('file', file);
 
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('courseName', courseName);
-    formData.append('passPercentage', passPercentage);
-    formData.append('durationMinutes', durationMinutes);
-
-    setLoading(true);
     try {
-      const res = await api.post('/quiz/uploadCSV', formData, {
+      const res = await api.post('/quiz/upload-csv', fd, {
         headers: {
-          'Content-Type': 'multipart/form-data',
-          Authorization: `Bearer ${token || localStorage.getItem('token')}`
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data'
         }
       });
-      alert('Upload successful');
-      console.log(res.data);
-      setFile(null);
+      alert('Uploaded: ' + (res.data?.quiz?.courseName || 'OK'));
     } catch (err) {
-      console.error(err);
-      alert(err.response?.data?.message || 'Upload failed');
-    } finally {
-      setLoading(false);
+      alert(err.response?.data?.message || err.message);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} style={{ maxWidth: 640, margin: 'auto', padding: 20 }}>
-      <Typography variant="h5" gutterBottom>Upload Quiz CSV</Typography>
+    <Box p={3} sx={{ maxWidth: 700, mx: 'auto' }}>
+      <Typography variant="h6">Upload Quiz CSV</Typography>
 
-      <FormControl fullWidth sx={{ mb: 2 }}>
+      <FormControl fullWidth sx={{ mt: 2 }}>
         <InputLabel>Select Course</InputLabel>
-        <Select value={courseName} onChange={(e) => setCourseName(e.target.value)} required>
-          {courses.map((c) => (
-            <MenuItem key={c._id} value={c.title || c.name || c._id}>
-              {c.title || c.name}
-            </MenuItem>
+        <Select
+          value={courseId}
+          label="Select Course"
+          onChange={(e) => setCourseId(e.target.value)}
+        >
+          {courses.map(c => (
+            <MenuItem key={c._id} value={c._id}>{c.title}</MenuItem>
           ))}
         </Select>
       </FormControl>
+
+       <TextField
+        label="Course Name (if not selecting)"
+        fullWidth
+        sx={{ mt: 2 }}
+        value={courseName}
+        onChange={(e) => setCourseName(e.target.value)}
+      /> 
 
       <TextField
         type="number"
         label="Pass Percentage"
         fullWidth
+        sx={{ mt: 2 }}
         value={passPercentage}
-        onChange={(e) => setPassPercentage(Number(e.target.value))}
-        required
-        sx={{ mb: 2 }}
+        onChange={(e) => setPassPercentage(e.target.value)}
       />
 
       <TextField
         type="number"
         label="Duration (minutes, 0 = no limit)"
         fullWidth
+        sx={{ mt: 2 }}
         value={durationMinutes}
-        onChange={(e) => setDurationMinutes(Number(e.target.value))}
-        sx={{ mb: 2 }}
+        onChange={(e) => setDurationMinutes(e.target.value)}
       />
 
-      <input accept=".csv" type="file" onChange={onFileChange} style={{ display: 'block', marginBottom: 12 }} />
+      <Box sx={{ mt: 2 }}>
+        <input
+          type="file"
+          accept=".csv"
+          onChange={(e) => setFile(e.target.files?.[0] || null)}
+        />
+      </Box>
 
-      <Button type="submit" variant="contained" disabled={loading} fullWidth>
-        {loading ? 'Uploading...' : 'Upload CSV'}
-      </Button>
-    </form>
+      <Button sx={{ mt: 2 }} variant="contained" onClick={handleSubmit}>Upload</Button>
+    </Box>
   );
 }

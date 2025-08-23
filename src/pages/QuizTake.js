@@ -1,64 +1,93 @@
+import React, { useEffect, useState, useRef } from "react";
+import {
+  Box,
+  Typography,
+  Button,
+  RadioGroup,
+  FormControlLabel,
+  Radio,
+  Card,
+  CardContent,
+  CardActions,
+} from "@mui/material";
+import api from "../utils/api";
+import { useAuth } from "../context/AuthContext";
 
-import React, { useEffect, useState, useRef } from 'react';
-import { Button, Typography, RadioGroup, FormControlLabel, Radio } from '@mui/material';
-import api from '../utils/api';
-import { useAuth } from '../context/AuthContext';
-import { useParams, useNavigate } from 'react-router-dom';
-
+// Format timer display
 function formatTime(sec) {
-  const m = Math.floor(sec / 60).toString().padStart(2, '0');
-  const s = (sec % 60).toString().padStart(2, '0');
+  const m = Math.floor(sec / 60).toString().padStart(2, "0");
+  const s = (sec % 60).toString().padStart(2, "0");
   return `${m}:${s}`;
 }
 
-export default function QuizTake() {
-  const { id  } = useParams();  
+export default function QuizzesAndTake() {
   const { token } = useAuth();
-  const [quiz, setQuiz] = useState(null);
+
+  // Quiz state
+  const [quizzes, setQuizzes] = useState([]);
+  const [selectedQuiz, setSelectedQuiz] = useState(null);
   const [answers, setAnswers] = useState([]);
   const [remaining, setRemaining] = useState(null);
-  const [startedAt, setStartedAt] = useState(null);
   const timerRef = useRef(null);
-  const navigate = useNavigate();
 
+  const [currentQ, setCurrentQ] = useState(0); 
+  const [result, setResult] = useState(null); 
+
+  // ================================
+  // Fetch all quizzes on load
+  // ================================
   useEffect(() => {
-    const fetchQuiz = async () => {
+    const fetchQuizzes = async () => {
       try {
-        const res = await api.get(`/quiz/take/${id}`, {
-          headers: { Authorization: `Bearer ${token || localStorage.getItem('token')}` }
+        const res = await api.get("/quiz", {
+          headers: { Authorization: `Bearer ${token}` },
         });
-        
-        setQuiz(res.data);
-        setAnswers(new Array(res.data.questions.length).fill(null));
-        if (res.data.duration && res.data.duration > 0) {
-          setRemaining(res.data.duration);
-        } else {
-          setRemaining(null);
-        }
+        setQuizzes(res.data || []);
       } catch (err) {
-        console.error(err);          
-        alert('Failed to load quiz');
-        navigate(-1);
+        alert(err.response?.data?.message || "Failed to load quizzes");
       }
     };
-    fetchQuiz();
-    
-  }, [id]);
 
-  useEffect(() => {
-    if (remaining === null) return;
+    fetchQuizzes();
+  }, [token]);
 
-    
-    if (startedAt === null) {
-      
-      return;
+  // ================================
+  // Fetch one quiz
+  // ================================
+  const fetchQuiz = async (quizId) => {
+    try {
+      const res = await api.get(`/quiz/take/${quizId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      setSelectedQuiz(res.data);
+      setAnswers(new Array(res.data.questions.length).fill(null));
+      setCurrentQ(0);
+      setResult(null);
+
+      if (res.data.duration && res.data.duration > 0) {
+        setRemaining(res.data.duration);
+      } else {
+        setRemaining(null);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Failed to load quiz");
+      setSelectedQuiz(null);
     }
+  };
+
+  // ================================
+  // Timer effect
+  // ================================
+  useEffect(() => {
+    if (remaining === null) return; // no time limit
 
     timerRef.current = setInterval(() => {
       setRemaining((r) => {
         if (r <= 1) {
           clearInterval(timerRef.current);
-          handleSubmit(true); 
+          handleSubmit(true);
           return 0;
         }
         return r - 1;
@@ -66,14 +95,11 @@ export default function QuizTake() {
     }, 1000);
 
     return () => clearInterval(timerRef.current);
-   
-  }, [startedAt]);
+  }, [selectedQuiz]);
 
-  const handleStart = () => {
-    setStartedAt(new Date().toISOString());
-    
-  };
-
+  // ================================
+  // Handlers
+  // ================================
   const handleSelect = (qIdx, optionIdx) => {
     const a = [...answers];
     a[qIdx] = optionIdx;
@@ -83,66 +109,189 @@ export default function QuizTake() {
   const handleSubmit = async (auto = false) => {
     try {
       if (timerRef.current) clearInterval(timerRef.current);
-      const res = await api.post('/quiz/submit', {
-        id ,
-        answers,
-        startedAt
-      }, {
-        headers: { Authorization: `Bearer ${token || localStorage.getItem('token')}` }
-      });
-
-      alert(`Result: ${res.data.status.toUpperCase()} — Score: ${res.data.score}`);
-      
-      navigate('/my-quizzes'); 
+      const res = await api.post(
+        "/quiz/submit",
+        {
+          quizId: selectedQuiz._id,
+          answers,
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      setResult(res.data);
     } catch (err) {
       console.error(err);
-      alert(err.response?.data?.message || 'Submit failed');
+      alert(err.response?.data?.message || "Submit failed");
     }
   };
 
-  if (!quiz) return <div>Loading...</div>;
+  // ================================
+  // Render result screen
+  // ================================
+  if (result) {
+    return (
+      <Box sx={{ maxWidth: 600, mx: "auto", p: 3, textAlign: "center" }}>
+        {result.status === "pass" ? (
+          <>
+            <Typography variant="h4" color="success.main">
+              🎉 Congratulations!
+            </Typography>
+            <Typography variant="h6" sx={{ mt: 2 }}>
+               Passed  {result.score}%
+            </Typography>
+          </>
+        ) : (
+          <>
+            {/* <Typography variant="h4" color="error.main">
+              ❌ Better luck next time
+            </Typography> */}
+            <Typography variant="h6" sx={{ mt: 2 }}>
+              You scored {result.score}%. Please try again.
+            </Typography>
+            <Button
+              sx={{ mt: 3 }}
+              variant="contained"
+              onClick={() => {
+                setSelectedQuiz(null);
+                setResult(null);
+              }}
+            >
+              Please Reattempt the Assessment
+            </Button>
+          </>
+        )}
+      </Box>
+    );
+  }
 
-  return (
-    <div style={{ maxWidth: 800, margin: 'auto', padding: 16 }}>
-      <Typography variant="h5">{quiz.courseName}</Typography>
-      <Typography>Pass percentage: {quiz.passPercentage}%</Typography>
+  // ================================
+  // Render quiz-taking screen
+  // ================================
+  if (selectedQuiz) {
+    const q = selectedQuiz.questions[currentQ];
+    return (
+      <Box sx={{ maxWidth: 800, mx: "auto", p: 2 }}>
+        <Typography variant="h5">{selectedQuiz.courseName}</Typography>
+        {/* <Typography sx={{ mb: 1 }}>
+          Pass percentage: {selectedQuiz.passPercentage}%
+        </Typography> */}
 
-      {quiz.duration > 0 && (
-        <div style={{ marginTop: 12, marginBottom: 12 }}>
+        {selectedQuiz.duration > 0 && (
+          <Box sx={{ my: 2 }}>
+            {/* <Typography>
+              Time limit: {Math.floor(selectedQuiz.duration / 60)} minutes
+            </Typography> */}
+            <Typography variant="h6">Time: {formatTime(remaining)}</Typography>
+          </Box>
+        )}
+
+        {/* One question at a time */}
+        <Box sx={{ mt: 2, p: 2, border: "1px solid #ddd", borderRadius: 2 }}>
           <Typography>
-            Time limit: {Math.floor(quiz.duration / 60)} minutes
+            {currentQ + 1}. {q.question}
           </Typography>
-          <Typography variant="h6">
-            Timer: {remaining === null ? 'Not started' : formatTime(remaining)}
-          </Typography>
-        </div>
-      )}
+          <RadioGroup
+            value={answers[currentQ] ?? ""}
+            onChange={(e) => handleSelect(currentQ, Number(e.target.value))}
+          >
+            {q.options.map((opt, j) => (
+              <FormControlLabel
+                key={j}
+                value={String(j)}
+                control={<Radio />}
+                label={opt}
+              />
+            ))}
+          </RadioGroup>
+        </Box>
 
-      {!startedAt ? (
-        <Button variant="contained" onClick={handleStart}>Start Quiz</Button>
-      ) : null}
+        {/* Navigation */}
+        <Box sx={{ mt: 3, display: "flex", justifyContent: "space-between" }}>
+          <Button
+            disabled={currentQ === 0}
+            variant="outlined"
+            onClick={() => setCurrentQ((q) => q - 1)}
+          >
+            Prev
+          </Button>
 
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          handleSubmit(false);
+          {currentQ < selectedQuiz.questions.length - 1 ? (
+            <Button variant="contained" onClick={() => setCurrentQ((q) => q + 1)}>
+              Next
+            </Button>
+          ) : (
+            <Button
+              variant="contained"
+              color="success"
+              onClick={() => handleSubmit(false)}
+            >
+              Finish & Submit
+            </Button>
+          )}
+        </Box>
+      </Box>
+    );
+  }
+
+  // ================================
+  // Render quiz list (Grid of Cards)
+  // ================================
+  return (
+    <Box p={3} sx={{ maxWidth: 1200, mx: "auto" }}>
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fill, minmax(250px, 1fr))",
+          gap: 3,
+          mt: 2,
         }}
       >
-        {quiz.questions.map((q, i) => (
-          <div key={q._id || i} style={{ marginTop: 16, padding: 12, border: '1px solid #ddd', borderRadius: 8 }}>
-            <Typography>{i + 1}. {q.question}</Typography>
-            <RadioGroup value={answers[i] ?? ''} onChange={(e) => handleSelect(i, Number(e.target.value))}>
-              {q.options.map((opt, j) => (
-                <FormControlLabel key={j} value={String(j)} control={<Radio />} label={opt} />
-              ))}
-            </RadioGroup>
-          </div>
-        ))}
+        {quizzes.map((q) => (
+          <Card
+            key={q._id}
+            sx={{
+              borderRadius: 3,
+              boxShadow: 3,
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "space-between",
+              transition: "0.2s",
+              "&:hover": { boxShadow: 6, transform: "translateY(-3px)" },
+            }}
+          >
+            <CardContent>
+              <Typography variant="h6" gutterBottom>
+                {q.courseName}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Questions: {q.questions?.length || "—"}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Pass: {q.passPercentage}%
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Time: {q.duration ? Math.floor(q.duration / 60) + " min" : "No limit"}
+              </Typography>
+            </CardContent>
 
-        <Button type="submit" variant="contained" sx={{ mt: 2 }}>
-          Submit
-        </Button>
-      </form>
-    </div>
+            <CardActions>
+              <Button
+                fullWidth
+                variant="contained"
+                sx={{ borderRadius: 2 }}
+                onClick={() => fetchQuiz(q._id)}
+              >
+                Start Now!
+              </Button>
+            </CardActions>
+          </Card>
+        ))}
+      </Box>
+
+      {quizzes.length === 0 && (
+        <Typography sx={{ mt: 2 }}>No quizzes available.</Typography>
+      )}
+    </Box>
   );
 }
