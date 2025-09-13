@@ -98,8 +98,9 @@ const PPTLessonManager = () => {
       </FormControl>
 
       <TextField
-        label="Lesson Title (optional)"
+        label="Lesson Title"
         fullWidth
+        required
         sx={{ mb: 2 }}
         value={form.title}
         onChange={(e) => setForm({ ...form, title: e.target.value })}
@@ -122,7 +123,7 @@ const PPTLessonManager = () => {
           onChange={(e) => handleFileChange(e, 'thumbnail')}
         />
       </Box>
-
+      
       <Button variant="contained" onClick={handleSubmit}>
         Upload Lesson
       </Button>

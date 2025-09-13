@@ -1,76 +1,15 @@
-// import React, { useState } from 'react';
-// import api from '../utils/api'; // ✅ use this instead of axios directly
-// import { useAuth } from '../context/AuthContext';
-// import { useNavigate } from 'react-router-dom';
-
-// const LoginPage = () => {
-//   const [email, setEmail] = useState('');
-//   const [otp, setOtp] = useState('');
-//   const [sent, setSent] = useState(false);
-//   const { login } = useAuth();
-//   const navigate = useNavigate();
-
-//   const handleSendOtp = async () => {
-//     try {
-//       await api.post('/auth/send-otp', { email }); // ✅ use api not axios
-//       setSent(true);
-//     } catch (err) {
-//       alert(err.response?.data?.message || 'Failed to send OTP');
-//     }
-//   };
-
-//   const handleVerifyOtp = async () => {
-//     try {
-//       const res = await api.post('/auth/verify-otp', { email, code: otp }); // ✅
-//       login(res.data.token);
-//       navigate(res.data.user.role === 'admin' ? '/admin/dashboard' : '/user/dashboard');
-//     } catch (err) {
-//       alert(err.response?.data?.message || 'OTP verification failed');
-//     }
-//   };
-
-//   return (
-//     <div className="max-w-md mx-auto mt-10 p-6 border rounded shadow">
-//       <h2 className="text-xl font-semibold mb-4">OTP Login</h2>
-//       <input
-//         type="email"
-//         placeholder="Enter Email"
-//         value={email}
-//         onChange={e => setEmail(e.target.value)}
-//         className="w-full mb-4 p-2 border rounded"
-//       />
-//       {sent && (
-//         <input
-//           type="text"
-//           placeholder="Enter OTP"
-//           value={otp}
-//           onChange={e => setOtp(e.target.value)}
-//           className="w-full mb-4 p-2 border rounded"
-//         />
-//       )}
-//       {!sent ? (
-//         <button onClick={handleSendOtp} className="bg-blue-500 text-white px-4 py-2 rounded">Send OTP</button>
-//       ) : (
-//         <button onClick={handleVerifyOtp} className="bg-green-500 text-white px-4 py-2 rounded">Verify OTP</button>
-//       )}
-//     </div>
-//   );
-// };
-
-// export default LoginPage;
-
-import React, { useState } from 'react';
-import api from '../utils/api';
-import { useAuth } from '../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import React, { useState } from "react";
+import api from "../utils/api";
+import { useAuth } from "../context/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 const AuthPage = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [form, setForm] = useState({
-    fullName: '',
-    email: '',
-    password: '',
-    dateOfBirth: '',
+    fullName: "",
+    email: "",
+    password: "",
+    dateOfBirth: "",
   });
 
   const { login } = useAuth();
@@ -85,26 +24,83 @@ const AuthPage = () => {
 
     try {
       if (isLogin) {
-        const res = await api.post('/auth/login', {
+        const res = await api.post("/auth/login", {
           email: form.email,
           password: form.password,
         });
 
         login(res.data.token);
-        navigate(res.data.user.role === 'admin' ? '/admin/dashboard' : '/user/dashboard');
+        navigate(
+          res.data.user.role === "admin"
+            ? "/admin/dashboard"
+            : "/user/dashboard"
+        );
       } else {
-        await api.post('/auth/register', form);
-        alert('Signup successful! Please login.');
+        await api.post("/auth/register", form);
+        alert("Signup successful! Please login.");
         setIsLogin(true);
       }
     } catch (err) {
-      alert(err.response?.data?.message || 'Something went wrong');
+      alert(err.response?.data?.message || "Something went wrong");
     }
   };
 
+  const styles = {
+    container: {
+      maxWidth: "420px",
+      margin: "60px auto",
+      padding: "30px",
+      border: "1px solid #ddd",
+      borderRadius: "12px",
+      boxShadow: "0px 4px 10px rgba(0,0,0,0.1)",
+      fontFamily: "Arial, sans-serif",
+      background: "#fff",
+    },
+    heading: {
+      fontSize: "22px",
+      fontWeight: "600",
+      marginBottom: "20px",
+      textAlign: "center",
+      color: "#333",
+    },
+    input: {
+      width: "95%",
+      padding: "12px",
+      marginBottom: "15px",
+      border: "1px solid #ccc",
+      borderRadius: "8px",
+      fontSize: "14px",
+      outline: "none",
+    },
+    button: {
+      width: "100%",
+      padding: "12px",
+      background: "#2563eb",
+      color: "white",
+      border: "none",
+      borderRadius: "8px",
+      fontSize: "16px",
+      fontWeight: "500",
+      cursor: "pointer",
+      transition: "0.3s",
+    },
+    toggleText: {
+      marginTop: "15px",
+      fontSize: "14px",
+      textAlign: "center",
+      color: "#555",
+    },
+    link: {
+      color: "#2563eb",
+      cursor: "pointer",
+      fontWeight: "500",
+      textDecoration: "underline",
+    },
+  };
+
   return (
-    <div className="max-w-md mx-auto mt-10 p-6 border rounded shadow">
-      <h2 className="text-xl font-semibold mb-4">{isLogin ? 'Login' : 'Sign Up'}</h2>
+    <div style={styles.container}>
+      <h2 style={styles.heading}>{isLogin ? "Login" : "Sign Up"}</h2>
 
       <form onSubmit={handleSubmit}>
         {!isLogin && (
@@ -113,14 +109,13 @@ const AuthPage = () => {
               name="fullName"
               placeholder="Full Name"
               onChange={handleChange}
-              className="w-full mb-4 p-2 border rounded"
+              style={styles.input}
             />
             <input
               name="dateOfBirth"
-              placeholder="Date of Birth (YYYY-MM-DD)"
               type="date"
               onChange={handleChange}
-              className="w-full mb-4 p-2 border rounded"
+              style={styles.input}
             />
           </>
         )}
@@ -130,7 +125,7 @@ const AuthPage = () => {
           type="email"
           placeholder="Email"
           onChange={handleChange}
-          className="w-full mb-4 p-2 border rounded"
+          style={styles.input}
         />
 
         <input
@@ -138,24 +133,18 @@ const AuthPage = () => {
           type="password"
           placeholder="Password"
           onChange={handleChange}
-          className="w-full mb-4 p-2 border rounded"
+          style={styles.input}
         />
 
-        <button
-          type="submit"
-          className="bg-blue-600 text-white px-4 py-2 rounded w-full"
-        >
-          {isLogin ? 'Login' : 'Sign Up'}
+        <button type="submit" style={styles.button}>
+          {isLogin ? "Login" : "Sign Up"}
         </button>
       </form>
 
-      <p className="text-sm text-center mt-4">
-        {isLogin ? 'New user?' : 'Already have an account?'}{' '}
-        <span
-          className="text-blue-600 cursor-pointer underline"
-          onClick={() => setIsLogin(!isLogin)}
-        >
-          {isLogin ? 'Create an account' : 'Login'}
+      <p style={styles.toggleText}>
+        {isLogin ? "New user?" : "Already have an account?"}{" "}
+        <span style={styles.link} onClick={() => setIsLogin(!isLogin)}>
+          {isLogin ? "Create an account" : "Login"}
         </span>
       </p>
     </div>
@@ -163,4 +152,3 @@ const AuthPage = () => {
 };
 
 export default AuthPage;
-

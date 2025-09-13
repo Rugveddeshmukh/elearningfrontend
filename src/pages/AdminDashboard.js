@@ -35,6 +35,7 @@ import UserList from "../components/UserList";
 import CourseManager from "../components/CourseManager";
 import PPTLessonManager from "../components/PPTLessonManager";
 import QuizManager from "../components/QuizManager";
+import AdminQuizStats from "../components/AdminQuizStats";
 
 const drawerWidth = 240;
 
@@ -123,9 +124,9 @@ const ResultPage = () => {
 
           {selectedMenu === "Quiz Management" && <QuizManager/>}
 
-          {selectedMenu === "Quiz Status Tracker" && (
-            <Typography variant="h5">Quiz Progress & Stats</Typography>
-          )}
+          {selectedMenu === "Quiz Status Tracker" && <AdminQuizStats/>
+            
+          }
 
           {selectedMenu === "Certificates" && (
             <Typography variant="h5">Certificate Management</Typography>

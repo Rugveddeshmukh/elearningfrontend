@@ -11,11 +11,12 @@ import {
   InputLabel,
   FormControl,
   Button,
+  Chip,
 } from "@mui/material";
 import api from "../utils/api";
 import { useAuth } from "../context/AuthContext";
 
-const BACKEND_URL = "https://backend-gels.vercel.app";
+const BACKEND_URL = "http://localhost:5000";
 
 const PPTLessonViewer = () => {
   const { token } = useAuth();
@@ -29,12 +30,57 @@ const PPTLessonViewer = () => {
   const [activeLesson, setActiveLesson] = useState(null);
   const [showPPT, setShowPPT] = useState(null);
 
-  // Helper to return full file URL
   const getFileUrl = (filePath) => {
     if (!filePath) return "";
     return filePath.startsWith("http")
       ? filePath
       : `${BACKEND_URL}/uploads/${filePath}`;
+  };
+
+  // ✅ Update lesson status in backend (user-specific)
+  const updateLessonStatus = async (lessonId, status) => {
+    try {
+      await api.put(
+        `/lesson/${lessonId}/progress`,
+        { status },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      // locally update lessonsByCourse state
+      setLessonsByCourse((prev) => {
+        const updated = { ...prev };
+        for (const courseId in updated) {
+          updated[courseId] = updated[courseId].map((l) =>
+            l._id === lessonId ? { ...l, userStatus: status } : l
+          );
+        }
+        return updated;
+      });
+    } catch (err) {
+      console.error("Failed to update lesson status", err);
+    }
+  };
+
+  // When opening PPT
+  const handleOpenPPT = (lesson) => {
+    setShowPPT(lesson);
+    updateLessonStatus(lesson._id, "in-progress");
+  };
+
+  // When closing PPT (mark completed)
+  const handleClosePPT = () => {
+    if (showPPT) updateLessonStatus(showPPT._id, "completed");
+    setShowPPT(null);
+  };
+
+  const handleActiveLessonClick = (lesson) => {
+    setActiveLesson(lesson);
+    updateLessonStatus(lesson._id, "in-progress");
+  };
+
+  const handleModuleClick = (lesson) => {
+    setShowPPT(lesson);
+    updateLessonStatus(lesson._id, "in-progress");
   };
 
   // Fetch categories & courses
@@ -55,7 +101,7 @@ const PPTLessonViewer = () => {
     fetchData();
   }, []);
 
-  // Fetch subcategories
+  // Fetch subcategories on category change
   useEffect(() => {
     if (selectedCategory && selectedCategory !== "All Categories") {
       const fetchSubcategories = async () => {
@@ -91,7 +137,7 @@ const PPTLessonViewer = () => {
     }
   }, [selectedCategory, selectedSubcategory, allCourses]);
 
-  // Fetch lessons per course
+  // Fetch lessons per course (with user status)
   useEffect(() => {
     const fetchLessons = async () => {
       const lessonsMap = {};
@@ -115,11 +161,12 @@ const PPTLessonViewer = () => {
     }
   }, [filteredCourses, token]);
 
-  // 1️⃣ PPT View Mode
+  // =================== UI Rendering ===================
+
   if (showPPT) {
     return (
       <Box p={3}>
-        <Button variant="outlined" onClick={() => setShowPPT(null)} sx={{ mb: 2 }}>
+        <Button variant="outlined" onClick={handleClosePPT} sx={{ mb: 2 }}>
           ← Back
         </Button>
         <Typography variant="h5" gutterBottom>
@@ -138,7 +185,6 @@ const PPTLessonViewer = () => {
     );
   }
 
-  // 2️⃣ Active Lesson Details
   if (activeLesson) {
     return (
       <Box p={3}>
@@ -150,8 +196,14 @@ const PPTLessonViewer = () => {
           ← Back to Lessons
         </Button>
 
-        <Card sx={{ display: "flex", borderRadius: 2, overflow: "hidden",width:'90%' }}>
-          {/* Left Side Thumbnail */}
+        <Card
+          sx={{
+            display: "flex",
+            borderRadius: 2,
+            overflow: "hidden",
+            width: "90%",
+          }}
+        >
           <Box sx={{ width: "40%" }}>
             <CardMedia
               component="img"
@@ -162,7 +214,6 @@ const PPTLessonViewer = () => {
             />
           </Box>
 
-          {/* Right Side Title */}
           <Box
             sx={{
               width: "20%",
@@ -183,7 +234,6 @@ const PPTLessonViewer = () => {
           </Box>
         </Card>
 
-        {/* Modules Section */}
         <Typography
           variant="h6"
           sx={{
@@ -193,19 +243,18 @@ const PPTLessonViewer = () => {
             fontWeight: 600,
             border: "1px solid #ddd",
             borderBottom: "none",
-             width:'87%',
+            width: "87%",
             marginTop: "40px",
           }}
         >
           Modules
         </Typography>
 
-        {/* Single Module Card */}
         <Box>
           <Card
             sx={{
               display: "flex",
-               width:'87%',
+              width: "87%",
               alignItems: "center",
               justifyContent: "flex-start",
               border: "1px solid #ddd",
@@ -217,9 +266,8 @@ const PPTLessonViewer = () => {
               cursor: "pointer",
               "&:hover": { backgroundColor: "#f9f9f9" },
             }}
-            onClick={() => setShowPPT(activeLesson)}
+            onClick={() => handleModuleClick(activeLesson)}
           >
-            {/* Left side Icon */}
             <Box sx={{ mr: 2 }}>
               <Box
                 sx={{
@@ -239,14 +287,33 @@ const PPTLessonViewer = () => {
               </Box>
             </Box>
 
-            {/* Right side Texts */}
-            <Box>
-              <Typography variant="subtitle1" fontWeight="600">
-                {activeLesson.moduleName}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                {activeLesson.title}
-              </Typography>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                width: "100%",
+              }}
+            >
+              <Box>
+                <Typography variant="subtitle1" fontWeight="600">
+                  {activeLesson.moduleName}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  {activeLesson.title}
+                </Typography>
+              </Box>
+              {activeLesson.userStatus && (
+                <Chip
+                  label={activeLesson.userStatus}
+                  color={
+                    activeLesson.userStatus === "completed"
+                      ? "success"
+                      : "warning"
+                  }
+                  size="small"
+                />
+              )}
             </Box>
           </Card>
         </Box>
@@ -254,10 +321,8 @@ const PPTLessonViewer = () => {
     );
   }
 
-  // 3️⃣ Default View (Courses + Lessons)
   return (
     <Box p={3}>
-      {/* Category + Subcategory Dropdown */}
       <Grid container spacing={2} sx={{ mb: 3 }}>
         <Grid item xs={12} sm={4} md={3}>
           <FormControl fullWidth sx={{ minWidth: 250 }}>
@@ -301,7 +366,6 @@ const PPTLessonViewer = () => {
         </Grid>
       </Grid>
 
-      {/* Lessons list */}
       {filteredCourses.map((course) => (
         <Box key={course._id} mb={5}>
           <Grid container spacing={3}>
@@ -317,9 +381,10 @@ const PPTLessonViewer = () => {
                       cursor: "pointer",
                       marginTop: "40px",
                       transition: "0.3s",
+                      position: "relative",
                       "&:hover": { transform: "scale(1.03)" },
                     }}
-                    onClick={() => setActiveLesson(lesson)}
+                    onClick={() => handleActiveLessonClick(lesson)}
                   >
                     <CardMedia
                       component="img"
@@ -339,6 +404,18 @@ const PPTLessonViewer = () => {
                         {lesson.title}
                       </Typography>
                     </CardContent>
+                    {lesson.userStatus && (
+                      <Chip
+                        label={lesson.userStatus}
+                        color={
+                          lesson.userStatus === "completed"
+                            ? "success"
+                            : "warning"
+                        }
+                        size="small"
+                        sx={{ position: "absolute", top: 10, right: 10 }}
+                      />
+                    )}
                   </Card>
                 </Grid>
               ))

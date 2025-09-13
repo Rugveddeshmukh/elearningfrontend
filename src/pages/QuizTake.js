@@ -29,7 +29,6 @@ export default function QuizzesAndTake() {
   const [answers, setAnswers] = useState([]);
   const [remaining, setRemaining] = useState(null);
   const timerRef = useRef(null);
-
   const [currentQ, setCurrentQ] = useState(0); 
   const [result, setResult] = useState(null); 
 
@@ -172,7 +171,7 @@ export default function QuizzesAndTake() {
     const q = selectedQuiz.questions[currentQ];
     return (
       <Box sx={{ maxWidth: 800, mx: "auto", p: 2 }}>
-        <Typography variant="h5">{selectedQuiz.courseName}</Typography>
+        <Typography variant="h5">{selectedQuiz.lessonId?.title}</Typography>
         {/* <Typography sx={{ mb: 1 }}>
           Pass percentage: {selectedQuiz.passPercentage}%
         </Typography> */}
@@ -262,7 +261,7 @@ export default function QuizzesAndTake() {
           >
             <CardContent>
               <Typography variant="h6" gutterBottom>
-                {q.courseName}
+                {q.lessonId?.title || q.lessonId} 
               </Typography>
               <Typography variant="body2" color="text.secondary">
                 Questions: {q.questions?.length || "—"}
@@ -273,16 +272,22 @@ export default function QuizzesAndTake() {
               <Typography variant="body2" color="text.secondary">
                 Time: {q.duration ? Math.floor(q.duration / 60) + " min" : "No limit"}
               </Typography>
+              {q.locked && (
+               <Typography sx={{ mt: 1 }} color="error">
+                 🔒 Complete lesson to unlock quiz
+               </Typography>
+              )}
             </CardContent>
 
             <CardActions>
               <Button
-                fullWidth
-                variant="contained"
-                sx={{ borderRadius: 2 }}
-                onClick={() => fetchQuiz(q._id)}
-              >
-                Start Now!
+               fullWidth
+               variant="contained"
+               sx={{ borderRadius: 2 }}
+               onClick={() => fetchQuiz(q._id)}
+               disabled={q.locked}
+            >
+               {q.locked ? "Locked" : "Start Now!"}
               </Button>
             </CardActions>
           </Card>

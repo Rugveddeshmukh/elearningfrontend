@@ -1,28 +1,41 @@
-
 import React, { useState } from "react";
-import {Box,Typography,AppBar,Toolbar,IconButton,Avatar,Drawer,List,ListItem,ListItemIcon,ListItemText,} from "@mui/material";
+import {
+  Box,
+  Typography,
+  AppBar,
+  Toolbar,
+  IconButton,
+  Avatar,
+  Drawer,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
+} from "@mui/material";
 
 import {
   Dashboard,
   School,
   History,
   HelpOutline,
-  AccountCircle,
   SupportAgent,
   Notifications,
   Explore,
   CalendarMonth,
 } from "@mui/icons-material";
 
-
-import LessonViewer from '../pages/LessonViewer'
+import LessonViewer from "../pages/LessonViewer";
 import QuizTake from "../pages/QuizTake";
+import ProfilePage from "./ProfilePage";
+import LoginHistory from "./LoginHistory";
+import LearningHistory from "../components/LearningHistory";
 
 const drawerWidth = 240;
 
 const ResultPage = () => {
   const [selectedMenu, setSelectedMenu] = useState("Dashboard");
 
+  
   const menuItems = [
     { text: "Dashboard", icon: <Dashboard /> },
     { text: "My Courses", icon: <Explore /> },
@@ -30,7 +43,6 @@ const ResultPage = () => {
     { text: "Learning History", icon: <History /> },
     { text: "Help", icon: <HelpOutline /> },
     { text: "Login History", icon: <CalendarMonth /> },
-    { text: "Profile", icon: <AccountCircle /> },
     { text: "Support / Tickets", icon: <SupportAgent /> },
   ];
 
@@ -63,7 +75,8 @@ const ResultPage = () => {
                 key={item.text}
                 onClick={() => handleMenuClick(item.text)}
                 sx={{
-                  backgroundColor: selectedMenu === item.text ? "#f37e81" : "inherit",
+                  backgroundColor:
+                    selectedMenu === item.text ? "#f37e81" : "inherit",
                   "&:hover": { backgroundColor: "#f37e81" },
                 }}
               >
@@ -86,7 +99,12 @@ const ResultPage = () => {
             <IconButton color="primary">
               <Notifications />
             </IconButton>
-            <Avatar sx={{ ml: 2 }} />
+
+            {/* Avatar वर क्लिक केलं की Profile उघडेल ✅ */}
+            <Avatar
+              sx={{ ml: 2, cursor: "pointer" }}
+              onClick={() => setSelectedMenu("Profile")}
+            />
           </Toolbar>
         </AppBar>
 
@@ -98,29 +116,19 @@ const ResultPage = () => {
             </Typography>
           )}
 
-          {selectedMenu === "My Courses" &&
-          <>
-           <LessonViewer/>
-          
-           </>}
+          {selectedMenu === "My Courses" && <LessonViewer />}
 
-          {selectedMenu === "Assessments" && <QuizTake/>}
+          {selectedMenu === "Assessments" && <QuizTake />}
 
-          {selectedMenu === "Learning History" && (
-            <Typography variant="body1"></Typography>
-          )}
+          {selectedMenu === "Learning History" && <LearningHistory/> }
 
           {selectedMenu === "Help" && (
             <Typography variant="body1"></Typography>
           )}
 
-          {selectedMenu === "Login History" && (
-            <Typography variant="body1"></Typography>
-          )}
+          {selectedMenu === "Login History" && <LoginHistory />}
 
-          {selectedMenu === "Profile" && (
-            <Typography variant="body1"></Typography>
-          )}
+          {selectedMenu === "Profile" && <ProfilePage />}
 
           {selectedMenu === "Support / Tickets" && (
             <Typography variant="body1"></Typography>
