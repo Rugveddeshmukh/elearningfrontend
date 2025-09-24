@@ -11,6 +11,7 @@ import {
   ListItem,
   ListItemIcon,
   ListItemText,
+  Badge
 } from "@mui/material";
 
 import {
@@ -29,11 +30,18 @@ import QuizTake from "../pages/QuizTake";
 import ProfilePage from "./ProfilePage";
 import LoginHistory from "./LoginHistory";
 import LearningHistory from "../components/LearningHistory";
+import RaiseTicket from "../pages/RaiseTicket";
+import Help from "../pages/Help";
+import UserLessonStats from "../pages/UserLessonStats";
+import UserQuizStats from "../pages/UserQuizStats";
+import UserNotifications from "../pages/UserNotifications";
 
 const drawerWidth = 240;
 
 const ResultPage = () => {
   const [selectedMenu, setSelectedMenu] = useState("Dashboard");
+  const [openNotifications, setOpenNotifications] = useState(false);
+  const [hasUnreadNotifications, setHasUnreadNotifications] = useState(true);
 
   
   const menuItems = [
@@ -96,11 +104,21 @@ const ResultPage = () => {
             <Typography variant="h6" sx={{ flexGrow: 1, color: "#003366" }}>
               {selectedMenu}
             </Typography>
-            <IconButton color="primary">
+            <IconButton 
+            color="primary"
+            onClick={() => {setOpenNotifications(true);
+              setHasUnreadNotifications(false);}}
+            >
+              <Badge
+                color="info"         
+                variant="dot"         
+                invisible={!hasUnreadNotifications} 
+              >
               <Notifications />
+              </Badge>
             </IconButton>
 
-            {/* Avatar वर क्लिक केलं की Profile उघडेल ✅ */}
+            {/* Avatar Profile ✅ */}
             <Avatar
               sx={{ ml: 2, cursor: "pointer" }}
               onClick={() => setSelectedMenu("Profile")}
@@ -108,13 +126,28 @@ const ResultPage = () => {
           </Toolbar>
         </AppBar>
 
+        {/* Notifications Drawer (Right Side) */}
+        <Drawer
+          anchor="right"
+          open={openNotifications}
+          onClose={() => setOpenNotifications(false)}
+        >
+          <Box sx={{ width: 350, p: 2 }}>
+            <Typography variant="h6" gutterBottom>
+              🔔 Notifications
+            </Typography>
+            <UserNotifications /> 
+          </Box>
+        </Drawer>
+
         {/* Content Display */}
         <Box sx={{ mt: 4 }}>
-          {selectedMenu === "Dashboard" && (
-            <Typography variant="h4" align="center" color="#003366">
-              Welcome to the Dashboard
-            </Typography>
-          )}
+          {selectedMenu === "Dashboard" && 
+          <>
+          <UserLessonStats/> 
+          <UserQuizStats/>
+         </> 
+         }
 
           {selectedMenu === "My Courses" && <LessonViewer />}
 
@@ -122,17 +155,14 @@ const ResultPage = () => {
 
           {selectedMenu === "Learning History" && <LearningHistory/> }
 
-          {selectedMenu === "Help" && (
-            <Typography variant="body1"></Typography>
-          )}
+          {selectedMenu === "Help" && <Help/> }
 
           {selectedMenu === "Login History" && <LoginHistory />}
 
           {selectedMenu === "Profile" && <ProfilePage />}
 
-          {selectedMenu === "Support / Tickets" && (
-            <Typography variant="body1"></Typography>
-          )}
+          {selectedMenu === "Support / Tickets" && <RaiseTicket/>
+          }
         </Box>
       </Box>
     </Box>

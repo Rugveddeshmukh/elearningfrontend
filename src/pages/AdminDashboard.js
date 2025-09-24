@@ -30,12 +30,18 @@ import {
   Assignment as TicketsIcon,
 } from "@mui/icons-material";
 
-import TotalUser from "../components/totaluser"; 
 import UserList from "../components/UserList";
+import ProfilePage from "./ProfilePage";
 import CourseManager from "../components/CourseManager";
 import PPTLessonManager from "../components/PPTLessonManager";
 import QuizManager from "../components/QuizManager";
 import AdminQuizStats from "../components/AdminQuizStats";
+import AdminTickets from "../components/AdminTickets";
+import AdminHelp from "../components/AdminHelp";
+import AdminSendNotification from "../components/AdminSendNotification";
+import DownloadUsersExcel from "../DownloadReport/DownloadUsersExcel";
+import DownloadQuizExcel from "../DownloadReport/DownloadQuizExcel";
+import AdminUserStats from "../components/AdminUserStats";
 
 const drawerWidth = 240;
 
@@ -105,17 +111,23 @@ const ResultPage = () => {
             <Typography variant="h6" sx={{ flexGrow: 1, color: "#003366" }}>
               {selectedMenu}
             </Typography>
-            <IconButton color="primary">
+            {/* <IconButton color="primary">
               <NotificationsIcon />
-            </IconButton>
-            <Avatar sx={{ ml: 2 }} />
+            </IconButton> */}
+            <Avatar sx={{ ml: 2, cursor: "pointer" }}
+            onClick={() => setSelectedMenu("Profile")}
+             />
           </Toolbar>
         </AppBar>
 
         {/* Dashboard Sections */}
         <Box sx={{ mt: 4 }}>
-          {selectedMenu === "Dashboard" &&  <TotalUser />}
-
+          {selectedMenu === "Dashboard" && 
+          <>
+           <AdminUserStats/>
+          </>
+           }
+          
           {selectedMenu === "User Management" && <UserList/>}
 
           {selectedMenu === "Course Management" && <CourseManager/>}
@@ -129,32 +141,36 @@ const ResultPage = () => {
           }
 
           {selectedMenu === "Certificates" && (
-            <Typography variant="h5">Certificate Management</Typography>
+            <Typography variant="h5">Comming Soon </Typography>
           )}
 
           {selectedMenu === "Reports & Analytics" && (
             <Typography variant="h5">Analytics & Insights</Typography>
           )}
 
-          {selectedMenu === "Notifications Manager" && (
-            <Typography variant="h5">Notifications Control Center</Typography>
-          )}
+          {selectedMenu === "Notifications Manager" && <AdminSendNotification/>
+            
+          }
 
           {selectedMenu === "Reviews & Feedback" && (
             <Typography variant="h5">User Feedback & Ratings</Typography>
           )}
 
-          {selectedMenu === "Help Document Upload" && (
-            <Typography variant="h5">Upload Help Guides</Typography>
-          )}
+          {selectedMenu === "Help Document Upload" && <AdminHelp/>
+            
+         }
+          
+         {selectedMenu === "Profile" && <ProfilePage />}
 
-          {selectedMenu === "Download Reports" && (
-            <Typography variant="h5">Generate & Download Reports</Typography>
-          )}
+          {selectedMenu === "Download Reports" && 
+          <>
+          <DownloadUsersExcel/>
+          <DownloadQuizExcel />
+          </>
+            }
 
-          {selectedMenu === "Support Tickets" && (
-            <Typography variant="h5">Support Tickets & Issues</Typography>
-          )}
+          {selectedMenu === "Support Tickets" &&  <AdminTickets/>
+          }
         </Box>
       </Box>
     </Box>

@@ -33,17 +33,35 @@ const LoginHistoryPage = () => {
   if (loading) return <p>Loading login history...</p>;
 
   return (
-    <div style={{ maxWidth: "600px", margin: "50px auto", fontFamily: "Arial" }}>
+    <div style={{ maxWidth: "800px", margin: "50px auto", fontFamily: "Arial" }}>
       <h2>Login History</h2>
       {history.length > 0 ? (
-        <ul>
-          {history.map((log, index) => (
-            <li key={index}>
-              IP: {log.ip}, Device: {log.device}, Time:{" "}
-              {new Date(log.timestamp).toLocaleString()}
-            </li>
-          ))}
-        </ul>
+        <table border="1" cellPadding="10" style={{ width: "100%", textAlign: "left" }}>
+          <thead>
+            <tr>
+              <th>IP Address</th>
+              <th>Device Type</th>
+              <th>Location</th>
+              <th>Login Time</th>
+              <th>Logout Time</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {history.map((log, index) => (
+              <tr key={index}>
+                <td>{log.ip}</td>
+                <td>{log.deviceType}</td>
+                <td>{log.location}</td>
+                <td>{new Date(log.timestamp).toLocaleString()}</td>
+                <td>{log.signOutTime ? new Date(log.signOutTime).toLocaleString() : "Active"}</td>
+                <td style={{ color: log.status === "Success" ? "green" : "red" }}>
+                  {log.status}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       ) : (
         <p>No login history available.</p>
       )}

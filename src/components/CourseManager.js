@@ -28,9 +28,9 @@ const CourseManager = () => {
 
   const handleSubmit = async () => {
     const payload = {
-      title: form.title,
       category: form.category,
-      subcategory: form.subcategory
+      subcategory: form.subcategory,
+      title: form.title,
     };
 
     try {
@@ -54,9 +54,9 @@ const CourseManager = () => {
 
   const handleEdit = (course) => {
     setForm({
-      title: course.title,
       category: course.category,
-      subcategory: course.subcategory
+      subcategory: course.subcategory,
+      title: course.title,
     });
     setEditId(course._id);
   };
@@ -105,9 +105,9 @@ const CourseManager = () => {
         {courses.map((course) => (
           <ListItem key={course._id} sx={{ display: "flex", justifyContent: "space-between" }}>
             <Box>
-              <Typography variant="subtitle1">{course.title}</Typography>
               <Typography variant="body2">Category: {course.category}</Typography>
               <Typography variant="body2">Subcategory: {course.subcategory}</Typography>
+               <Typography variant="subtitle1">{course.title}</Typography>
             </Box>
             <Box>
               <IconButton onClick={() => handleEdit(course)}><Edit /></IconButton>

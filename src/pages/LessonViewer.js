@@ -16,7 +16,7 @@ import {
 import api from "../utils/api";
 import { useAuth } from "../context/AuthContext";
 
-const BACKEND_URL = "https://backend-2rol.vercel.app/";
+const BACKEND_URL = "http://localhost:5000";
 
 const PPTLessonViewer = () => {
   const { token } = useAuth();

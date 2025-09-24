@@ -6,10 +6,13 @@ import { useNavigate } from "react-router-dom";
 const AuthPage = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [form, setForm] = useState({
+    employeeId: "",
     fullName: "",
     email: "",
     password: "",
-    dateOfBirth: "",
+    contactNo: "",
+    teamLeader: "",
+    designation: "",
   });
 
   const { login } = useAuth();
@@ -41,7 +44,19 @@ const AuthPage = () => {
         setIsLogin(true);
       }
     } catch (err) {
-      alert(err.response?.data?.message || "Something went wrong");
+          if (err.response?.status === 403) {
+          const code = err.response.data.code;
+
+          if (code === "PENDING_APPROVAL") {
+          alert("Your account is pending admin approval. Please wait.");
+          } else if (code === "ACCOUNT_INACTIVE") {
+            alert("Your account is inactive. Please contact admin.");
+          } else {
+            alert("Access denied. Please contact admin.");
+          }
+          } else {
+            alert(err.response?.data?.message || "Something went wrong");
+          }
     }
   };
 
@@ -105,37 +120,83 @@ const AuthPage = () => {
       <form onSubmit={handleSubmit}>
         {!isLogin && (
           <>
+            {/* Employee ID */}
+            <input
+              name="employeeId"
+              placeholder="Employee ID"
+              onChange={handleChange}
+              style={styles.input}
+              value={form.employeeId}
+            />
+
+            {/* Full Name */}
             <input
               name="fullName"
               placeholder="Full Name"
               onChange={handleChange}
               style={styles.input}
+              value={form.fullName}
             />
+
+            {/* Contact No */}
             <input
-              name="dateOfBirth"
-              type="date"
+              name="contactNo"
+              placeholder="Contact No"
               onChange={handleChange}
               style={styles.input}
+              value={form.contactNo}
             />
+
+            {/* Team Leader (dropdown – फक्त user साठी) */}
+            <select
+              name="teamLeader"
+              onChange={handleChange}
+              style={styles.input}
+              value={form.teamLeader}
+            >
+              <option value="">Select Team Leader</option>
+              <option value="TL1">Team Leader 1</option>
+              <option value="TL2">Team Leader 2</option>
+              <option value="TL3">Team Leader 3</option>
+            </select>
+
+            {/* Designation (dropdown – फक्त user साठी) */}
+            <select
+              name="designation"
+              onChange={handleChange}
+              style={styles.input}
+              value={form.designation}
+            >
+              <option value="">Select Designation</option>
+              <option value="Developer">Developer</option>
+              <option value="Tester">Tester</option>
+              <option value="Manager">Manager</option>
+              <option value="Support">Support</option>
+            </select>
           </>
         )}
 
+        {/* Email */}
         <input
           name="email"
           type="email"
           placeholder="Email"
           onChange={handleChange}
           style={styles.input}
+          value={form.email}
         />
 
+        {/* Password */}
         <input
           name="password"
           type="password"
           placeholder="Password"
           onChange={handleChange}
           style={styles.input}
+          value={form.password}
         />
 
+        {/* Submit button */}
         <button type="submit" style={styles.button}>
           {isLogin ? "Login" : "Sign Up"}
         </button>
