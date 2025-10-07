@@ -274,7 +274,7 @@ export default function QuizzesAndTake() {
               </Typography>
               {q.locked && (
                <Typography sx={{ mt: 1 }} color="error">
-                 🔒 Complete lesson to unlock quiz
+                 🔒 Complete lesson to unlock Assessment
                </Typography>
               )}
             </CardContent>

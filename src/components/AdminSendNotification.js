@@ -12,6 +12,9 @@ import {
   TableCell,
   IconButton,
   CircularProgress,
+  Checkbox,
+  ListItemText,
+  Paper,
 } from "@mui/material";
 import { Delete } from "@mui/icons-material";
 import api from "../utils/api";
@@ -21,7 +24,7 @@ const AdminNotificationsPage = () => {
   const { token } = useAuth();
 
   const [form, setForm] = useState({
-    userId: "all", // "all" for all users or specific user._id
+    userId: ["all"],
     teamLeader: "all",
     designation: "all",
     title: "",
@@ -35,7 +38,6 @@ const AdminNotificationsPage = () => {
   const [teamLeaders, setTeamLeaders] = useState([]);
   const [designations, setDesignations] = useState([]);
 
-  // Fetch all notifications for admin
   const fetchNotifications = async () => {
     setLoading(true);
     try {
@@ -50,7 +52,6 @@ const AdminNotificationsPage = () => {
     }
   };
 
-  // Fetch all users for dropdowns
   const fetchUserData = async () => {
     try {
       const res = await api.get("/admin/all-users", {
@@ -70,30 +71,17 @@ const AdminNotificationsPage = () => {
     fetchUserData();
   }, []);
 
-  // Auto-fill Team Leader & Designation on user select
-  useEffect(() => {
-    if (form.userId === "all") {
-      setForm((prev) => ({ ...prev, teamLeader: "all", designation: "all" }));
-    } else {
-      const selectedUser = users.find((u) => u._id === form.userId);
-      if (selectedUser) {
-        setForm((prev) => ({
-          ...prev,
-          teamLeader: selectedUser.teamLeader || "",
-          designation: selectedUser.designation || "",
-        }));
-      }
-    }
-  }, [form.userId, users]);
+  const filteredUsers = users.filter((u) => {
+    const matchTL = form.teamLeader === "all" || u.teamLeader === form.teamLeader;
+    const matchDes = form.designation === "all" || u.designation === form.designation;
+    return matchTL && matchDes;
+  });
 
-  // Send Notification
   const handleSubmit = async () => {
     try {
       const payload = {
-        targetType: form.userId === "all" ? "all" : "user",
-        targetValue: form.userId === "all" ? null : form.userId,
-        teamLeader: form.teamLeader,
-        designation: form.designation,
+        targetType: form.userId.includes("all") ? "all" : "users",
+        targetValue: form.userId.includes("all") ? null : form.userId,
         title: form.title,
         message: form.message,
         type: form.type,
@@ -106,7 +94,7 @@ const AdminNotificationsPage = () => {
       alert("Notification sent successfully");
 
       setForm({
-        userId: "all",
+        userId: ["all"],
         teamLeader: "all",
         designation: "all",
         title: "",
@@ -120,7 +108,6 @@ const AdminNotificationsPage = () => {
     }
   };
 
-  // Delete Notification
   const handleDelete = async (id) => {
     if (!window.confirm("Are you sure you want to delete this notification?")) return;
 
@@ -135,139 +122,222 @@ const AdminNotificationsPage = () => {
   };
 
   return (
-    <Box p={3}>
-      <Typography variant="h6" gutterBottom>
-        Send Notification
-      </Typography>
-
-      {/* User Dropdown */}
-      <TextField
-        select
-        label="Select User"
-        fullWidth
-        margin="normal"
-        value={form.userId}
-        onChange={(e) => setForm({ ...form, userId: e.target.value })}
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        p: 4,
+        bgcolor: "#f9f9f9",
+        minHeight: "100vh",
+      }}
+    >
+      {/* Send Notification Card */}
+      <Paper
+        sx={{
+          p: 4,
+          width: { xs: "95%", sm: "700px" },
+          borderRadius: 3,
+          boxShadow: 4,
+          mb: 5,
+          textAlign: "center",
+        }}
       >
-        <MenuItem value="all">All Users</MenuItem>
-        {users.map((u) => (
-          <MenuItem key={u._id} value={u._id}>
-            {u.fullName} ({u.employeeId})
+        <Typography
+          variant="h5"
+          sx={{ color: "#003366", fontWeight: "bold", mb: 3 }}
+        >
+          Send Notification
+        </Typography>
+
+        <TextField
+          select
+          label="Team Leader"
+          fullWidth
+          margin="normal"
+          value={form.teamLeader}
+          onChange={(e) => setForm({ ...form, teamLeader: e.target.value })}
+        >
+          <MenuItem value="all">All Team Leaders</MenuItem>
+          {teamLeaders.map((tl, idx) => (
+            <MenuItem key={idx} value={tl}>
+              {tl}
+            </MenuItem>
+          ))}
+        </TextField>
+
+        <TextField
+          select
+          label="Designation"
+          fullWidth
+          margin="normal"
+          value={form.designation}
+          onChange={(e) => setForm({ ...form, designation: e.target.value })}
+        >
+          <MenuItem value="all">All Designations</MenuItem>
+          {designations.map((d, idx) => (
+            <MenuItem key={idx} value={d}>
+              {d}
+            </MenuItem>
+          ))}
+        </TextField>
+
+        <TextField
+          select
+          label="Select Users"
+          fullWidth
+          margin="normal"
+          SelectProps={{
+            multiple: true,
+            renderValue: (selected) =>
+              selected.includes("all")
+                ? "Select All"
+                : users
+                    .filter((u) => selected.includes(u._id))
+                    .map((u) => `${u.fullName} (${u.employeeId})`)
+                    .join(", "),
+          }}
+          value={form.userId}
+          onChange={(e) => {
+            let value = e.target.value;
+            if (value.includes("all")) {
+              value = ["all"];
+            }
+            setForm({ ...form, userId: value });
+          }}
+        >
+          <MenuItem value="all">
+            <Checkbox checked={form.userId.includes("all")} />
+            <ListItemText primary="Select All" />
           </MenuItem>
-        ))}
-      </TextField>
+          {filteredUsers.map((u) => (
+            <MenuItem key={u._id} value={u._id}>
+              <Checkbox checked={form.userId.includes(u._id)} />
+              <ListItemText primary={`${u.fullName} (${u.employeeId})`} />
+            </MenuItem>
+          ))}
+        </TextField>
 
-      {/* Team Leader Dropdown */}
-      <TextField
-        select
-        label="Team Leader"
-        fullWidth
-        margin="normal"
-        value={form.teamLeader}
-        onChange={(e) => setForm({ ...form, teamLeader: e.target.value })}
-      >
-        <MenuItem value="all">All Team Leaders</MenuItem>
-        {teamLeaders.map((tl, idx) => (
-          <MenuItem key={idx} value={tl}>
-            {tl}
-          </MenuItem>
-        ))}
-      </TextField>
+        <TextField
+          label="Title"
+          fullWidth
+          margin="normal"
+          value={form.title}
+          onChange={(e) => setForm({ ...form, title: e.target.value })}
+        />
+        <TextField
+          label="Message"
+          fullWidth
+          margin="normal"
+          value={form.message}
+          onChange={(e) => setForm({ ...form, message: e.target.value })}
+        />
+        <TextField
+          select
+          label="Type"
+          fullWidth
+          margin="normal"
+          value={form.type}
+          onChange={(e) => setForm({ ...form, type: e.target.value })}
+        >
+          <MenuItem value="course">Course Update</MenuItem>
+          <MenuItem value="result">Result Declared</MenuItem>
+          <MenuItem value="certificate">Certificate Available</MenuItem>
+          <MenuItem value="general">General</MenuItem>
+        </TextField>
 
-      {/* Designation Dropdown */}
-      <TextField
-        select
-        label="Designation"
-        fullWidth
-        margin="normal"
-        value={form.designation}
-        onChange={(e) => setForm({ ...form, designation: e.target.value })}
-      >
-        <MenuItem value="all">All Designations</MenuItem>
-        {designations.map((d, idx) => (
-          <MenuItem key={idx} value={d}>
-            {d}
-          </MenuItem>
-        ))}
-      </TextField>
-
-      {/* Title */}
-      <TextField
-        label="Title"
-        fullWidth
-        margin="normal"
-        value={form.title}
-        onChange={(e) => setForm({ ...form, title: e.target.value })}
-      />
-
-      {/* Message */}
-      <TextField
-        label="Message"
-        fullWidth
-        margin="normal"
-        value={form.message}
-        onChange={(e) => setForm({ ...form, message: e.target.value })}
-      />
-
-      {/* Type */}
-      <TextField
-        select
-        label="Type"
-        fullWidth
-        margin="normal"
-        value={form.type}
-        onChange={(e) => setForm({ ...form, type: e.target.value })}
-      >
-        <MenuItem value="course">Course Update</MenuItem>
-        <MenuItem value="result">Result Declared</MenuItem>
-        <MenuItem value="certificate">Certificate Available</MenuItem>
-        <MenuItem value="general">General</MenuItem>
-      </TextField>
-
-      <Button variant="contained" sx={{ mt: 2, mb: 4 }} onClick={handleSubmit}>
-        Send
-      </Button>
+        <Button
+          variant="contained"
+          sx={{
+            mt: 3,
+            bgcolor: "#003366",
+            "&:hover": { bgcolor: "#002244" },
+            textTransform: "none",
+          }}
+          onClick={handleSubmit}
+        >
+          Send Notification
+        </Button>
+      </Paper>
 
       {/* Notifications Table */}
-      <Typography variant="h6" gutterBottom>
-        All Notifications
-      </Typography>
-      {loading ? (
-        <CircularProgress />
-      ) : (
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Title</TableCell>
-              <TableCell>Message</TableCell>
-              <TableCell>Type</TableCell>
-              <TableCell>User</TableCell>
-              <TableCell>Team Leader</TableCell>
-              <TableCell>Designation</TableCell>
-              <TableCell>Created At</TableCell>
-              <TableCell>Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {notifications.map((n) => (
-              <TableRow key={n._id}>
-                <TableCell>{n.title}</TableCell>
-                <TableCell>{n.message}</TableCell>
-                <TableCell>{n.type}</TableCell>
-                <TableCell>{n.userId ? n.userId.fullName : "All Users"}</TableCell>
-                <TableCell>{n.userId?.teamLeader || n.teamLeader || "-"}</TableCell>
-                <TableCell>{n.userId?.designation || n.designation || "-"}</TableCell>
-                <TableCell>{new Date(n.createdAt).toLocaleString()}</TableCell>
-                <TableCell>
-                  <IconButton color="error" onClick={() => handleDelete(n._id)}>
-                    <Delete />
-                  </IconButton>
-                </TableCell>
+      <Paper
+        sx={{
+          p: 3,
+          width: { xs: "95%", md: "95%" },
+          borderRadius: 3,
+          boxShadow: 4,
+          overflowX: "auto",
+        }}
+      >
+        <Typography
+          variant="h5"
+          sx={{ color: "#003366", fontWeight: "bold", textAlign: "center", mb: 3 }}
+        >
+          All Notifications
+        </Typography>
+
+        {loading ? (
+          <Box sx={{ display: "flex", justifyContent: "center", p: 4 }}>
+            <CircularProgress />
+          </Box>
+        ) : (
+          <Table
+           sx={{
+              borderCollapse: "collapse",
+              width: "100%",
+              "& th, & td": {
+              border: "1px solid #cfd8dc",
+              padding: "8px 10px",
+              textAlign: "center",
+              fontSize: "14px",
+            },
+              "& th": {
+              backgroundColor: "#f1f5f9",
+              fontWeight: "bold",
+              color: "#003366",
+             },
+            "& tr:nth-of-type(even)": {
+            backgroundColor: "#f9fafb",
+           },
+          "& tr:hover": {
+           backgroundColor: "#e8f0fe",
+         },
+         }}
+          >
+            <TableHead >
+              <TableRow>
+                <TableCell>Title</TableCell>
+                <TableCell>Message</TableCell>
+                <TableCell>Type</TableCell>
+                <TableCell>User</TableCell>
+                <TableCell>Team Leader</TableCell>
+                <TableCell>Designation</TableCell>
+                <TableCell>Created At</TableCell>
+                <TableCell>Actions</TableCell>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      )}
+            </TableHead>
+            <TableBody>
+              {notifications.map((n) => (
+                <TableRow key={n._id}>
+                  <TableCell>{n.title}</TableCell>
+                  <TableCell>{n.message}</TableCell>
+                  <TableCell>{n.type}</TableCell>
+                  <TableCell>{n.userId ? n.userId.fullName : "All Users"}</TableCell>
+                  <TableCell>{n.userId?.teamLeader || "All Team Leaders"}</TableCell>
+                  <TableCell>{n.userId?.designation || "All Designations"}</TableCell>
+                  <TableCell>{new Date(n.createdAt).toLocaleString()}</TableCell>
+                  <TableCell>
+                    <IconButton color="error" onClick={() => handleDelete(n._id)}>
+                      <Delete />
+                    </IconButton>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </Paper>
     </Box>
   );
 };

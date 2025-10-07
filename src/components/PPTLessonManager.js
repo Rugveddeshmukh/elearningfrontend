@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   Box, Typography, TextField, Button, FormControl,
-  InputLabel, Select, MenuItem, List, ListItem, IconButton, Link, Divider
+  InputLabel, Select, MenuItem, Card, CardContent, CardActions, Divider
 } from '@mui/material';
 import { Delete } from '@mui/icons-material';
 import api from '../utils/api';
@@ -12,11 +12,9 @@ const PPTLessonManager = () => {
   const [categories, setCategories] = useState([]);
   const [subcategories, setSubcategories] = useState([]);
   const [courses, setCourses] = useState([]);
-
   const [selectedCategory, setSelectedCategory] = useState('');
   const [selectedSubcategory, setSelectedSubcategory] = useState('');
   const [selectedCourse, setSelectedCourse] = useState('');
-
   const [lessons, setLessons] = useState([]);
   const [form, setForm] = useState({ title: '', ppt: null, thumbnail: null });
 
@@ -27,7 +25,6 @@ const PPTLessonManager = () => {
       : `${process.env.REACT_APP_BACKEND_URL}/uploads/${filePath}`;
   };
 
-  // Fetch all courses initially
   useEffect(() => {
     api.get('/course').then(res => {
       const allCourses = res.data;
@@ -37,7 +34,6 @@ const PPTLessonManager = () => {
     });
   }, []);
 
-  // Fetch all lessons initially (so they show below without selecting a course)
   useEffect(() => {
     const fetchAllLessons = async () => {
       try {
@@ -50,7 +46,6 @@ const PPTLessonManager = () => {
     fetchAllLessons();
   }, [token]);
 
-  // Update subcategories when category changes
   useEffect(() => {
     if (selectedCategory) {
       const subs = courses
@@ -67,12 +62,10 @@ const PPTLessonManager = () => {
     }
   }, [selectedCategory, courses]);
 
-  // Clear selected course when subcategory changes
   useEffect(() => {
     if (selectedSubcategory) setSelectedCourse('');
   }, [selectedSubcategory]);
 
-  // Fetch lessons for selected course
   const fetchLessonsForCourse = async (courseId) => {
     try {
       const res = await api.get(`/lesson/${courseId}`, { headers: { Authorization: `Bearer ${token}` } });
@@ -105,9 +98,7 @@ const PPTLessonManager = () => {
       await api.post('/lesson', formData, {
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' },
       });
-
       setForm({ title: '', ppt: null, thumbnail: null });
-      // Fetch all lessons again to display below
       const res = await api.get('/lesson', { headers: { Authorization: `Bearer ${token}` } });
       setLessons(res.data);
     } catch (err) {
@@ -126,18 +117,16 @@ const PPTLessonManager = () => {
   };
 
   return (
-    <Box p={3}>
-      <Typography variant="h6" gutterBottom>
-        Upload PPT Lessons with Thumbnails
+    <Box sx={{ p: 1, maxWidth: 1200, mx: 'auto' }}>
+      {/* Centered Title */}
+      <Typography variant="h6" gutterBottom sx={{ textAlign: 'center', fontWeight: 'bold', color: '#003366', mb: 3 }}>
+       Lesson Upload with Preview
       </Typography>
 
       {/* Category Dropdown */}
       <FormControl fullWidth sx={{ mb: 2 }}>
         <InputLabel>Category</InputLabel>
-        <Select
-          value={selectedCategory}
-          onChange={(e) => setSelectedCategory(e.target.value)}
-        >
+        <Select value={selectedCategory} onChange={(e) => setSelectedCategory(e.target.value)}>
           {categories.map((cat, idx) => (
             <MenuItem key={idx} value={cat}>{cat}</MenuItem>
           ))}
@@ -147,10 +136,7 @@ const PPTLessonManager = () => {
       {/* Subcategory Dropdown */}
       <FormControl fullWidth sx={{ mb: 2 }} disabled={!selectedCategory}>
         <InputLabel>Subcategory</InputLabel>
-        <Select
-          value={selectedSubcategory}
-          onChange={(e) => setSelectedSubcategory(e.target.value)}
-        >
+        <Select value={selectedSubcategory} onChange={(e) => setSelectedSubcategory(e.target.value)}>
           {subcategories.map((sub, idx) => (
             <MenuItem key={idx} value={sub}>{sub}</MenuItem>
           ))}
@@ -160,10 +146,7 @@ const PPTLessonManager = () => {
       {/* Course Dropdown */}
       <FormControl fullWidth sx={{ mb: 2 }} disabled={!selectedSubcategory}>
         <InputLabel>Course</InputLabel>
-        <Select
-          value={selectedCourse}
-          onChange={(e) => setSelectedCourse(e.target.value)}
-        >
+        <Select value={selectedCourse} onChange={(e) => setSelectedCourse(e.target.value)}>
           {courses
             .filter(c => c.category === selectedCategory && c.subcategory === selectedSubcategory)
             .map(c => (
@@ -182,81 +165,45 @@ const PPTLessonManager = () => {
         onChange={(e) => setForm({ ...form, title: e.target.value })}
       />
 
-      {/* File Inputs */}
-      <Box sx={{ mb: 2 }}>
-        <Typography variant="body1">Upload PPT:</Typography>
-        <input
-          type="file"
-          accept=".ppt,.pptx,.pdf"
-          onChange={(e) => handleFileChange(e, 'ppt')}
-        />
+      {/* File Inputs + Button in one line */}
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 2, mb: 3, flexWrap: 'wrap' }}>
+        <p style={{marginBottom:"25px"}}>Only PPT Uploaded</p>
+        <input type="file" accept=".ppt,.pptx,.pdf" onChange={(e) => handleFileChange(e, 'ppt')} />
+        <p style={{marginBottom:"25px"}}>Only Thumbnail (Images)</p>
+        <input type="file" accept="image/*" onChange={(e) => handleFileChange(e, 'thumbnail')} />
+        <Button variant="contained" onClick={handleSubmit} style={{width:'25%'}}>Submit</Button>
       </Box>
 
-      <Box sx={{ mb: 2 }}>
-        <Typography variant="body1">Upload Thumbnail (Image):</Typography>
-        <input
-          type="file"
-          accept="image/*"
-          onChange={(e) => handleFileChange(e, 'thumbnail')}
-        />
-      </Box>
-
-      <Button variant="contained" onClick={handleSubmit}>
-        Upload Lesson
-      </Button>
-
-      <Divider sx={{ my: 3 }} />
-
-      {/* All Lessons List */}
-      <Typography variant="h6" gutterBottom>
-        All Uploaded Lessons
+      {/* Centered All Uploaded Lessons */}
+      <Typography variant="h6" gutterBottom sx={{ textAlign: 'center', fontWeight: 'bold', color: '#003366', mt: 5, mb: 3 }}>
+        All Lessons
       </Typography>
 
-      {lessons.length === 0 && (
-        <Typography color="text.secondary">No lessons uploaded yet.</Typography>
-      )}
-
-      <List sx={{ mt: 2 }}>
+      {/* Lessons Grid - 4 per row */}
+      <Box sx={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))',
+        gap: 2
+      }}>
         {lessons.map((lesson) => (
-          <ListItem
-            key={lesson._id}
-            secondaryAction={
-              <IconButton onClick={() => handleDelete(lesson._id)}>
-                <Delete />
-              </IconButton>
-            }
-          >
-            <Box>
-              <Typography>{lesson.title || 'Untitled Lesson'}</Typography>
-              <Typography variant="body2" color="text.secondary">
+          <Card key={lesson._id} sx={{ borderRadius: 2 }}>
+            <CardContent>
+              <Typography variant="subtitle1">{lesson.title || 'Untitled Lesson'}</Typography>
+              <Typography variant="body2">
                 Course: {courses.find(c => c._id === lesson.courseId)?.title || 'Unknown'}
               </Typography>
-
-              {lesson.ppt && lesson.thumbnail && (
-                <Box sx={{ my: 1 }}>
-                  <Link
-                    href={getFileUrl(lesson.ppt)}
-                    target="_blank"
-                    rel="noopener"
-                    download
-                  >
-                    <img
-                      src={getFileUrl(lesson.thumbnail)}
-                      alt="Thumbnail"
-                      width={120}
-                      style={{ cursor: 'pointer', borderRadius: 4 }}
-                    />
-                  </Link>
+              {lesson.thumbnail && (
+                <Box sx={{ mt: 1 }}>
+                  <img src={getFileUrl(lesson.thumbnail)} alt="Thumbnail" width={120} style={{ borderRadius: 4 }} />
                 </Box>
               )}
-
-              {!lesson.ppt && (
-                <Typography color="error">No PPT uploaded</Typography>
-              )}
-            </Box>
-          </ListItem>
+            </CardContent>
+            <CardActions>
+              <Button color="error" onClick={() => handleDelete(lesson._id)}>Delete</Button>
+            </CardActions>
+          </Card>
         ))}
-      </List>
+      </Box>
     </Box>
   );
 };

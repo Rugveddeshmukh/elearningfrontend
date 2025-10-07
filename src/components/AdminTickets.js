@@ -1,5 +1,17 @@
 import React, { useEffect, useState } from "react";
-import { Box, Typography, Table, TableBody, TableCell, TableHead, TableRow, Paper, Button, TextField, CircularProgress } from "@mui/material";
+import {
+  Box,
+  Typography,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
+  Paper,
+  Button,
+  TextField,
+  CircularProgress,
+} from "@mui/material";
 import api from "../utils/api";
 import { useAuth } from "../context/AuthContext";
 
@@ -28,7 +40,9 @@ const AdminTickets = () => {
 
   const handleReply = async (ticketId) => {
     try {
-      await api.put(`/tickets/${ticketId}/reply`, { reply: replyText[ticketId] },
+      await api.put(
+        `/tickets/${ticketId}/reply`,
+        { reply: replyText[ticketId] },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       fetchTickets();
@@ -41,7 +55,7 @@ const AdminTickets = () => {
   const handleClose = async (ticketId) => {
     try {
       await api.put(`/tickets/${ticketId}/close`, {}, {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` },
       });
       fetchTickets();
     } catch (err) {
@@ -64,10 +78,46 @@ const AdminTickets = () => {
   if (loading) return <CircularProgress />;
 
   return (
-    <Box maxWidth="1000px" mx="auto" mt={4}>
-      <Typography variant="h5" mb={2}>All User Tickets</Typography>
-      <Paper>
-        <Table>
+    <Box maxWidth="95%" mx="auto" mt={1}>
+      <Typography
+        variant="h5"
+        mb={2}
+        textAlign="center"
+        sx={{ fontWeight: "bold", color: "#003366" }}
+      >
+        All User Tickets
+      </Typography>
+
+      <Paper
+        elevation={3}
+        sx={{
+          borderRadius: 2,
+          overflow: "hidden",
+        }}
+      >
+        <Table
+          sx={{
+            borderCollapse: "collapse",
+            width: "100%",
+            "& th, & td": {
+              border: "1px solid #cfd8dc", 
+              padding: "8px 10px",
+              textAlign: "center",
+              fontSize: "14px",
+            },
+            "& th": {
+              backgroundColor: "#f1f5f9",
+              fontWeight: "bold",
+              color: "#003366",
+            },
+            "& tr:nth-of-type(even)": {
+              backgroundColor: "#f9fafb", 
+            },
+            "& tr:hover": {
+              backgroundColor: "#e8f0fe", 
+            },
+          }}
+        >
           <TableHead>
             <TableRow>
               <TableCell>User</TableCell>
@@ -79,30 +129,94 @@ const AdminTickets = () => {
               <TableCell>Actions</TableCell>
             </TableRow>
           </TableHead>
+
           <TableBody>
             {tickets.map((ticket) => (
               <TableRow key={ticket._id}>
                 <TableCell>{ticket.userId?.fullName || "Unknown User"}</TableCell>
                 <TableCell>{ticket.subject}</TableCell>
-                <TableCell>{ticket.description}</TableCell>
+                <TableCell sx={{ textAlign: "left" }}>
+                  {ticket.description}
+                </TableCell>
                 <TableCell>
                   {ticket.screenshot ? (
-                    <a href={ticket.screenshot} target="_blank" rel="noreferrer">View</a>
-                  ) : "N/A"}
+                    <a
+                      href={ticket.screenshot}
+                      target="_blank"
+                      rel="noreferrer"
+                      style={{ color: "#1976d2", textDecoration: "none" }}
+                    >
+                      View
+                    </a>
+                  ) : (
+                    "N/A"
+                  )}
                 </TableCell>
-                <TableCell>{ticket.status}</TableCell>
-                <TableCell>{ticket.adminResponse || "Pending"}</TableCell>
+                <TableCell
+                  sx={{
+                    color:
+                      ticket.status === "closed"
+                        ? "red"
+                        : ticket.status === "resolved"
+                        ? "green"
+                        : "orange",
+                    fontWeight: "bold",
+                    textTransform: "capitalize",
+                  }}
+                >
+                  {ticket.status}
+                </TableCell>
+                <TableCell sx={{ textAlign: "left" }}>
+                  {ticket.adminResponse || "Pending"}
+                </TableCell>
                 <TableCell>
-                  <Box display="flex" gap={1} alignItems="center">
+                  <Box display="flex" flexDirection="column" gap={1}>
                     <TextField
                       size="small"
                       value={replyText[ticket._id] || ""}
-                      onChange={(e) => setReplyText({ ...replyText, [ticket._id]: e.target.value })}
+                      onChange={(e) =>
+                        setReplyText({
+                          ...replyText,
+                          [ticket._id]: e.target.value,
+                        })
+                      }
                       placeholder="Type reply..."
+                      sx={{
+                        backgroundColor: "#fff",
+                        borderRadius: 1,
+                      }}
                     />
-                    <Button variant="contained" size="small" onClick={() => handleReply(ticket._id)}>Reply</Button>
-                    <Button variant="outlined" size="small" color="error" onClick={() => handleClose(ticket._id)}>Close</Button>
-                    <Button variant="outlined" size="small" color="error" onClick={() => handleDelete(ticket._id)}>Delete</Button>
+                    <Box display="flex" gap={1} justifyContent="center">
+                      <Button
+                        variant="contained"
+                        size="small"
+                        onClick={() => handleReply(ticket._id)}
+                        sx={{
+                          textTransform: "none",
+                          backgroundColor: "#1976d2",
+                        }}
+                      >
+                        Reply
+                      </Button>
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        color="warning"
+                        onClick={() => handleClose(ticket._id)}
+                        sx={{ textTransform: "none" }}
+                      >
+                        Close
+                      </Button>
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        color="error"
+                        onClick={() => handleDelete(ticket._id)}
+                        sx={{ textTransform: "none" }}
+                      >
+                        Delete
+                      </Button>
+                    </Box>
                   </Box>
                 </TableCell>
               </TableRow>

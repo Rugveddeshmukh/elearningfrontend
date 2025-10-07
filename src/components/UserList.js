@@ -75,34 +75,67 @@ const UserList = () => {
   }, [startDate, endDate]);
 
   return (
-    <Paper sx={{ p: 2.1, mt: 3, overflowX: "auto" }}>
-      {/* Header + Date Filter */}
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-        <Typography variant="h6">Registered User List</Typography>
-        <Box display="flex" gap={2}>
-          <TextField
-            type="date"
-            label="Start Date"
-            size="small"
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
-          />
-          <TextField
-            type="date"
-            label="End Date"
-            size="small"
-            value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
-          />
-          <Button variant="contained" onClick={fetchUsers}>
-            Filter
-          </Button>
-        </Box>
+    <Paper sx={{ p: 2.1, mt: 1, overflowX: "auto" }}>
+      {/* Title - Center Aligned */}
+      <Box display="flex" justifyContent="center" mb={0}>
+        <Typography
+          variant="h6"
+          sx={{
+            fontWeight: "bold",
+            color: "#003366",
+            textAlign: "center",
+          }}
+        >
+          User List
+        </Typography>
+      </Box>
+
+      {/* Date Filter Section */}
+      <Box display="flex" justifyContent="flex-end" alignItems="center" mb={1} gap={2}>
+        <TextField
+          type="date"
+          label="Start Date"
+          size="small"
+          value={startDate}
+          onChange={(e) => setStartDate(e.target.value)}
+        />
+        <TextField
+          type="date"
+          label="End Date"
+          size="small"
+          value={endDate}
+          onChange={(e) => setEndDate(e.target.value)}
+        />
+        <Button variant="contained" onClick={fetchUsers}>
+          Filter
+        </Button>
       </Box>
 
       {/* User Table */}
       <TableContainer>
-        <Table sx={{ borderCollapse: "collapse" }}>
+        <Table
+          sx={{
+            borderCollapse: "collapse",
+            width: "100%",
+            "& th, & td": {
+              border: "1px solid #cfd8dc",
+              padding: "8px 10px",
+              textAlign: "center",
+              fontSize: "14px",
+            },
+            "& th": {
+              backgroundColor: "#f1f5f9",
+              fontWeight: "bold",
+              color: "#003366",
+            },
+            "& tr:nth-of-type(even)": {
+              backgroundColor: "#f9fafb",
+            },
+            "& tr:hover": {
+              backgroundColor: "#e8f0fe",
+            },
+          }}
+        >
           <TableHead>
             <TableRow>
               {[
@@ -118,17 +151,7 @@ const UserList = () => {
                 "Last Login",
                 "Actions",
               ].map((header) => (
-                <TableCell
-                  key={header}
-                  sx={{
-                    border: "1px solid #ccc",
-                    fontWeight: "bold",
-                    backgroundColor: "#f0f0f0",
-                    textAlign: "center",
-                  }}
-                >
-                  {header}
-                </TableCell>
+                <TableCell key={header}>{header}</TableCell>
               ))}
             </TableRow>
           </TableHead>
@@ -181,15 +204,15 @@ const UserList = () => {
                       >
                         {user.isBlocked ? "Inactive" : "Active"}
                       </Button>,
-                      user.isApproved && user.approvedAt ? new Date(user.approvedAt).toLocaleDateString() : "Pending",
+                      user.isApproved && user.approvedAt
+                        ? new Date(user.approvedAt).toLocaleDateString()
+                        : "Pending",
                       lastLogin,
                       <IconButton onClick={() => handleDelete(user._id)} color="error">
                         <Delete />
                       </IconButton>,
                     ].map((cell, index) => (
-                      <TableCell key={index} sx={{ border: "1px solid #ccc", textAlign: "center" }}>
-                        {cell}
-                      </TableCell>
+                      <TableCell key={index}>{cell}</TableCell>
                     ))}
                   </TableRow>
                 );

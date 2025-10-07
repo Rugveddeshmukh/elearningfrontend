@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import {
   Box, Button, TextField, Typography,
-  List, ListItem, IconButton, Divider
+  Card, CardContent, CardActions, IconButton, Divider
 } from "@mui/material";
 import { Delete, Edit } from "@mui/icons-material";
 import api from "../utils/api";
@@ -27,22 +27,14 @@ const CourseManager = () => {
   }, []);
 
   const handleSubmit = async () => {
-    const payload = {
-      category: form.category,
-      subcategory: form.subcategory,
-      title: form.title,
-    };
+    const payload = { category: form.category, subcategory: form.subcategory, title: form.title };
 
     try {
       if (editId) {
-        await api.put(`/course/${editId}`, payload, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        await api.put(`/course/${editId}`, payload, { headers: { Authorization: `Bearer ${token}` } });
         setEditId(null);
       } else {
-        await api.post("/course", payload, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        await api.post("/course", payload, { headers: { Authorization: `Bearer ${token}` } });
       }
 
       setForm({ title: "", category: "", subcategory: "" });
@@ -53,19 +45,13 @@ const CourseManager = () => {
   };
 
   const handleEdit = (course) => {
-    setForm({
-      category: course.category,
-      subcategory: course.subcategory,
-      title: course.title,
-    });
+    setForm({ category: course.category, subcategory: course.subcategory, title: course.title });
     setEditId(course._id);
   };
 
   const handleDelete = async (id) => {
     try {
-      await api.delete(`/course/${id}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      await api.delete(`/course/${id}`, { headers: { Authorization: `Bearer ${token}` } });
       fetchCourses();
     } catch (error) {
       console.error("Delete error:", error);
@@ -73,12 +59,14 @@ const CourseManager = () => {
   };
 
   return (
-    <Box p={4}>
-      <Typography variant="h5" mb={2}>
-        Manage Courses
+    <Box p={1} sx={{ maxWidth: 1200, mx: "auto" }}>
+      {/* Centered Title */}
+      <Typography variant="h5" mb={1} sx={{ textAlign: "center", fontWeight: "bold", color: "#003366" }}>
+        Course Management
       </Typography>
 
-      <Box mb={3} display="flex" flexDirection="column" gap={2}>
+      {/* Form */}
+      <Box mb={4} display="flex" flexDirection="column" gap={2}>
         <TextField
           label="Category"
           value={form.category}
@@ -94,28 +82,33 @@ const CourseManager = () => {
           value={form.title}
           onChange={(e) => setForm({ ...form, title: e.target.value })}
         />
-        <Button variant="contained" onClick={handleSubmit}>
+        <Button variant="contained" onClick={handleSubmit} sx={{ width: "30%", alignSelf: "center" }}>
           {editId ? "Update Course" : "Add Course"}
         </Button>
       </Box>
 
       <Divider sx={{ mb: 3 }} />
 
-      <List>
+      {/* Courses Grid */}
+      <Box sx={{
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
+        gap: 2
+      }}>
         {courses.map((course) => (
-          <ListItem key={course._id} sx={{ display: "flex", justifyContent: "space-between" }}>
-            <Box>
-              <Typography variant="body2">Category: {course.category}</Typography>
-              <Typography variant="body2">Subcategory: {course.subcategory}</Typography>
-               <Typography variant="subtitle1">{course.title}</Typography>
-            </Box>
-            <Box>
+          <Card key={course._id} sx={{ borderRadius: 2 }}>
+            <CardContent>
+              <Typography variant="body2" color="text.secondary">Category: {course.category}</Typography>
+              <Typography variant="body2" color="text.secondary">Subcategory: {course.subcategory}</Typography>
+              <Typography variant="subtitle1" sx={{ fontWeight: "bold" }}>{course.title}</Typography>
+            </CardContent>
+            <CardActions>
               <IconButton onClick={() => handleEdit(course)}><Edit /></IconButton>
               <IconButton onClick={() => handleDelete(course._id)}><Delete /></IconButton>
-            </Box>
-          </ListItem>
+            </CardActions>
+          </Card>
         ))}
-      </List>
+      </Box>
     </Box>
   );
 };

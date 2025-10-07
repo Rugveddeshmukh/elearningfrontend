@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import logo from "../Assest/OmSai-Credit-Collection-Servicess-logo-02.png";
+
 import {
   Box,
   Typography,
@@ -11,7 +13,11 @@ import {
   ListItem,
   ListItemIcon,
   ListItemText,
-  Badge
+  Badge,
+  InputBase,
+  Menu,
+  MenuItem,
+  Button,
 } from "@mui/material";
 
 import {
@@ -23,6 +29,7 @@ import {
   Notifications,
   Explore,
   CalendarMonth,
+  ExitToApp,
 } from "@mui/icons-material";
 
 import LessonViewer from "../pages/LessonViewer";
@@ -33,8 +40,8 @@ import LearningHistory from "../components/LearningHistory";
 import RaiseTicket from "../pages/RaiseTicket";
 import Help from "../pages/Help";
 import UserLessonStats from "../pages/UserLessonStats";
-import UserQuizStats from "../pages/UserQuizStats";
 import UserNotifications from "../pages/UserNotifications";
+import Dashboardviewmore from "../pages/Dashboardviewmore";
 
 const drawerWidth = 240;
 
@@ -42,8 +49,9 @@ const ResultPage = () => {
   const [selectedMenu, setSelectedMenu] = useState("Dashboard");
   const [openNotifications, setOpenNotifications] = useState(false);
   const [hasUnreadNotifications, setHasUnreadNotifications] = useState(true);
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
-  
   const menuItems = [
     { text: "Dashboard", icon: <Dashboard /> },
     { text: "My Courses", icon: <Explore /> },
@@ -58,24 +66,77 @@ const ResultPage = () => {
     setSelectedMenu(menu);
   };
 
+  const handleProfileClick = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleProfileClose = () => {
+    setAnchorEl(null);
+  };
+
+  const handleSearch = (query) => {
+    setSearchQuery(query.toLowerCase());
+
+    if (query.toLowerCase().includes("course")) {
+      setSelectedMenu("My Courses");
+    } else if (query.toLowerCase().includes("assessment")) {
+      setSelectedMenu("Assessments");
+    } else if (query.toLowerCase().includes("lesson")) {
+      setSelectedMenu("Dashboard");
+    } else if (query.toLowerCase().includes("login")) {
+      setSelectedMenu("Login History");
+    } else if (query.toLowerCase().includes("profile")) {
+      setSelectedMenu("Profile");
+    } else if (query.toLowerCase().includes("help")) {
+      setSelectedMenu("Help");
+    } else if (
+      query.toLowerCase().includes("ticket") ||
+      query.toLowerCase().includes("support")
+    ) {
+      setSelectedMenu("Support / Tickets");
+    }
+  };
+
   return (
-    <Box sx={{ display: "flex", height: "100vh" }}>
+    <Box sx={{ display: "flex", minHeight: "100vh" }}>
       {/* Sidebar */}
       <Drawer
         variant="permanent"
         sx={{
           width: drawerWidth,
           flexShrink: 0,
-          [`& .MuiDrawer-paper`]: {
+          "& .MuiDrawer-paper": {
             width: drawerWidth,
             boxSizing: "border-box",
-            backgroundColor: "#003366",
-            color: "#fff",
+            backgroundColor: "#fff",
+            color: "#333",
+            display: "flex",
+            flexDirection: "column",
           },
         }}
       >
-        <Toolbar />
-        <Box sx={{ overflow: "auto" }}>
+        <Toolbar
+         sx={{
+         background: "#003366",
+         color: "#fff",
+         justifyContent: "center",
+         }}
+       >
+  <Box
+    component="img"
+    src={logo}
+    alt="Logo"
+    sx={{
+      width: 200, // adjust width as needed
+      height: "auto",
+      objectFit: "contain",
+    }}
+  />
+</Toolbar>
+
+
+        {/* Menu List */}
+        <Box sx={{ flexGrow: 1, overflow: "auto" }}>
           <List>
             {menuItems.map((item) => (
               <ListItem
@@ -84,49 +145,161 @@ const ResultPage = () => {
                 onClick={() => handleMenuClick(item.text)}
                 sx={{
                   backgroundColor:
-                    selectedMenu === item.text ? "#f37e81" : "inherit",
-                  "&:hover": { backgroundColor: "#f37e81" },
+                    selectedMenu === item.text ? "#e6f0ff" : "inherit",
+                  "&:hover": { backgroundColor: "#e6f0ff" },
                 }}
               >
-                <ListItemIcon sx={{ color: "#fff" }}>{item.icon}</ListItemIcon>
+                <ListItemIcon sx={{ color: "#003366" }}>{item.icon}</ListItemIcon>
                 <ListItemText primary={item.text} />
               </ListItem>
             ))}
           </List>
         </Box>
+
+        {/* Logout Button */}
+        <Box sx={{ p: 2 }}>
+          <Button
+            variant="contained"
+            startIcon={<ExitToApp />}
+            fullWidth
+            sx={{
+              bgcolor: "#e53935",
+              color: "#fff",
+              textTransform: "none",
+              borderRadius: "30px",
+              py: 1.5,
+              "&:hover": { bgcolor: "#d32f2f" },
+            }}
+            onClick={async () => {
+              try {
+                await fetch("/api/auth/logout", {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${localStorage.getItem("token")}`,
+                  },
+                });
+                localStorage.removeItem("token");
+                localStorage.removeItem("user");
+                window.location.href = "/login";
+              } catch (err) {
+                console.error("Logout failed:", err);
+              }
+            }}
+          >
+            Logout
+          </Button>
+        </Box>
       </Drawer>
 
-      {/* Main content */}
-      <Box component="main" sx={{ flexGrow: 1, bgcolor: "#f4f6f8", p: 3 }}>
+      {/* Main Content */}
+      <Box
+        component="main"
+        sx={{
+          flexGrow: 1,
+          display: "flex",
+          flexDirection: "column",
+          overflow: "hidden",
+          bgcolor: "#f4f6f8",
+        }}
+      >
         {/* Topbar */}
-        <AppBar position="static" color="transparent" elevation={0}>
-          <Toolbar sx={{ justifyContent: "flex-end" }}>
-            <Typography variant="h6" sx={{ flexGrow: 1, color: "#003366" }}>
-              {selectedMenu}
-            </Typography>
-            <IconButton 
-            color="primary"
-            onClick={() => {setOpenNotifications(true);
-              setHasUnreadNotifications(false);}}
+        <AppBar
+          position="static"
+          elevation={0}
+          sx={{ bgcolor: "#fff", borderBottom: "1px solid #ddd", px: 2, flexShrink: 0 }}
+        >
+          <Toolbar sx={{ position: "relative", justifyContent: "center" }}>
+            {/* Search Bar */}
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                bgcolor: "#f1f3f4",
+                px: 2,
+                borderRadius: "20px",
+                flexGrow: 1,
+                maxWidth: "500px",
+              }}
             >
-              <Badge
-                color="info"         
-                variant="dot"         
-                invisible={!hasUnreadNotifications} 
-              >
-              <Notifications />
-              </Badge>
-            </IconButton>
+              <InputBase
+                placeholder="What do you want to learn?"
+                fullWidth
+                value={searchQuery}
+                onChange={(e) => handleSearch(e.target.value)}
+                sx={{ fontSize: "0.9rem" }}
+              />
+            </Box>
 
-            {/* Avatar Profile ✅ */}
-            <Avatar
-              sx={{ ml: 2, cursor: "pointer" }}
-              onClick={() => setSelectedMenu("Profile")}
-            />
+            {/* Right side buttons */}
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                position: "absolute",
+                right: 20,
+              }}
+            >
+              <IconButton
+                color="primary"
+                onClick={() => {
+                  setOpenNotifications(true);
+                  setHasUnreadNotifications(false);
+                }}
+              >
+                <Badge
+                  color="error"
+                  variant="dot"
+                  invisible={!hasUnreadNotifications}
+                >
+                  <Notifications />
+                </Badge>
+              </IconButton>
+
+              <Avatar
+                sx={{ ml: 2, cursor: "pointer", bgcolor: "#003366" }}
+                onClick={handleProfileClick}
+              />
+              <Menu
+                anchorEl={anchorEl}
+                open={Boolean(anchorEl)}
+                onClose={handleProfileClose}
+              >
+                <MenuItem
+                  onClick={() => {
+                    setSelectedMenu("Profile");
+                    handleProfileClose();
+                  }}
+                >
+                  Profile
+                </MenuItem>
+                <MenuItem
+                  onClick={async () => {
+                    try {
+                      await fetch("/api/auth/logout", {
+                        method: "POST",
+                        headers: {
+                          "Content-Type": "application/json",
+                          Authorization: `Bearer ${localStorage.getItem("token")}`,
+                        },
+                      });
+                      localStorage.removeItem("token");
+                      localStorage.removeItem("user");
+                      window.location.href = "/login";
+                    } catch (err) {
+                      console.error("Logout failed:", err);
+                    }
+                    handleProfileClose();
+                  }}
+                >
+                  Log Out
+                </MenuItem>
+              </Menu>
+            </Box>
           </Toolbar>
         </AppBar>
 
-        {/* Notifications Drawer (Right Side) */}
+        {/* Notifications Drawer */}
         <Drawer
           anchor="right"
           open={openNotifications}
@@ -136,33 +309,25 @@ const ResultPage = () => {
             <Typography variant="h6" gutterBottom>
               🔔 Notifications
             </Typography>
-            <UserNotifications /> 
+            <UserNotifications />
           </Box>
         </Drawer>
 
-        {/* Content Display */}
-        <Box sx={{ mt: 4 }}>
-          {selectedMenu === "Dashboard" && 
-          <>
-          <UserLessonStats/> 
-          <UserQuizStats/>
-         </> 
-         }
-
+        {/* Scrollable Content */}
+        <Box sx={{ flexGrow: 1, overflowY: "auto", p: 2 }}>
+          {selectedMenu === "Dashboard" && (
+            <>
+              <Dashboardviewmore setSelectedMenu={setSelectedMenu} />
+              <UserLessonStats />
+            </>
+          )}
           {selectedMenu === "My Courses" && <LessonViewer />}
-
           {selectedMenu === "Assessments" && <QuizTake />}
-
-          {selectedMenu === "Learning History" && <LearningHistory/> }
-
-          {selectedMenu === "Help" && <Help/> }
-
+          {selectedMenu === "Learning History" && <LearningHistory />}
+          {selectedMenu === "Help" && <Help />}
           {selectedMenu === "Login History" && <LoginHistory />}
-
           {selectedMenu === "Profile" && <ProfilePage />}
-
-          {selectedMenu === "Support / Tickets" && <RaiseTicket/>
-          }
+          {selectedMenu === "Support / Tickets" && <RaiseTicket />}
         </Box>
       </Box>
     </Box>

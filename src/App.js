@@ -38,6 +38,8 @@ function App() {
             }
           />
 
+          
+
           {/* Default fallback route */}
           <Route path="/" element={<Navigate to="/login" />} />
           <Route path="*" element={<h2>404 Not Found</h2>} />

@@ -1,5 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { Box, Typography, TextField, Button, FormControl, InputLabel, Select, MenuItem,Card, CardContent, CardActions } from '@mui/material';
+import { 
+  Box, Typography, TextField, Button, FormControl, InputLabel, 
+  Select, MenuItem, Card, CardContent, CardActions 
+} from '@mui/material';
 import api from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 
@@ -28,12 +31,12 @@ export default function AdminQuizUpload() {
       setLessonId('');
       return;
     }
-
     api.get(`/lesson/${courseId}`, { headers: { Authorization: `Bearer ${token}` } })
       .then(res => setLessons(res.data || []))
       .catch(err => console.error('Error fetching lessons', err));
   }, [courseId, token]);
 
+  // Fetch quizzes
   useEffect(() => {
     api.get('/quiz', { headers: { Authorization: `Bearer ${token}` } })
       .then(res => setQuizzes(res.data || []))
@@ -55,7 +58,7 @@ export default function AdminQuizUpload() {
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' }
       });
       const uploadedLesson = lessons.find(l => l._id === lessonId);
-      alert('Uploaded Quiz successfully: ' + (uploadedLesson?.title || 'OK'));
+      alert('Uploaded Assessment successfully: ' + (uploadedLesson?.title || 'OK'));
       setQuizzes(prev => [...prev, res.data.quiz]);
     } catch (err) {
       alert(err.response?.data?.message || err.message);
@@ -74,8 +77,14 @@ export default function AdminQuizUpload() {
   };
 
   return (
-    <Box p={3} sx={{ maxWidth: 700, mx: 'auto' }}>
-      <Typography variant="h6">Upload Quiz CSV</Typography>
+    <Box p={1} sx={{ maxWidth: 1200, mx: 'auto' }}>
+      {/* Centered Upload Quiz CSV */}
+      <Typography 
+        variant="h5" 
+        sx={{ textAlign: 'center', fontWeight: 'bold', color: "#003366", mb: 1 }}
+      >
+       Add Assessment CSV
+      </Typography>
 
       <FormControl fullWidth sx={{ mt: 2 }}>
         <InputLabel>Select Course</InputLabel>
@@ -113,15 +122,41 @@ export default function AdminQuizUpload() {
         onChange={(e) => setDurationMinutes(e.target.value)}
       />
 
-      <Box sx={{ mt: 2 }}>
-        <input type="file" accept=".csv" onChange={(e) => setFile(e.target.files?.[0] || null)} />
+      {/* Centered file input + Upload button */}
+      <Box sx={{
+        mt: 2,
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        gap: 2
+        
+      }}>
+        <p style={{marginBottom:"35px"}}>Only CSV file Uploaded</p>
+        <input 
+          type="file" 
+          accept=".csv" 
+          onChange={(e) => setFile(e.target.files?.[0] || null)} 
+          style={{ width: "400px", height: "35px" }} 
+        />
+        <Button variant="contained" onClick={handleSubmit} sx={{width:"40%", height: "40px" }}>
+         Submit
+        </Button>
       </Box>
 
-      <Button sx={{ mt: 2 }} variant="contained" onClick={handleSubmit}>Upload</Button>
+      {/* Centered All Quizzes title */}
+      <Typography 
+        variant="h5" 
+        sx={{ textAlign: 'center', fontWeight: 'bold', color: "#003366", mt: 5, mb: 3 }}
+      >
+        All Assessment
+      </Typography>
 
-      {/* Quiz List */}
-      <Typography variant="h6" sx={{ mt: 4 }}>All Quizzes</Typography>
-      <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(250px, 1fr))", gap: 2, mt: 2 }}>
+      {/* Quiz List - 4 per row */}
+      <Box sx={{
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fill, minmax(250px, 1fr))",
+        gap: 2
+      }}>
         {quizzes.map(q => (
           <Card key={q._id} sx={{ borderRadius: 2 }}>
             <CardContent>
