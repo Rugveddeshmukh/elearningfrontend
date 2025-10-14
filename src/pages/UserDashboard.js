@@ -22,12 +22,12 @@ import {
 
 import {
   Dashboard,
-  School,
+  MenuBook,
+  Quiz,
   History,
   HelpOutline,
   SupportAgent,
   Notifications,
-  Explore,
   CalendarMonth,
   ExitToApp,
 } from "@mui/icons-material";
@@ -54,8 +54,8 @@ const ResultPage = () => {
 
   const menuItems = [
     { text: "Dashboard", icon: <Dashboard /> },
-    { text: "My Courses", icon: <Explore /> },
-    { text: "Assessments", icon: <School /> },
+    { text: "My Courses", icon: <MenuBook /> },
+    { text: "Assessments", icon: <Quiz /> },
     { text: "Learning History", icon: <History /> },
     { text: "Help", icon: <HelpOutline /> },
     { text: "Login History", icon: <CalendarMonth /> },
@@ -75,26 +75,17 @@ const ResultPage = () => {
   };
 
   const handleSearch = (query) => {
-    setSearchQuery(query.toLowerCase());
+    const lowerQuery = query.toLowerCase();
+    setSearchQuery(lowerQuery);
 
-    if (query.toLowerCase().includes("course")) {
-      setSelectedMenu("My Courses");
-    } else if (query.toLowerCase().includes("assessment")) {
-      setSelectedMenu("Assessments");
-    } else if (query.toLowerCase().includes("lesson")) {
-      setSelectedMenu("Dashboard");
-    } else if (query.toLowerCase().includes("login")) {
-      setSelectedMenu("Login History");
-    } else if (query.toLowerCase().includes("profile")) {
-      setSelectedMenu("Profile");
-    } else if (query.toLowerCase().includes("help")) {
-      setSelectedMenu("Help");
-    } else if (
-      query.toLowerCase().includes("ticket") ||
-      query.toLowerCase().includes("support")
-    ) {
+    if (lowerQuery.includes("course")) setSelectedMenu("My Courses");
+    else if (lowerQuery.includes("assessment")) setSelectedMenu("Assessments");
+    else if (lowerQuery.includes("lesson")) setSelectedMenu("Dashboard");
+    else if (lowerQuery.includes("login")) setSelectedMenu("Login History");
+    else if (lowerQuery.includes("profile")) setSelectedMenu("Profile");
+    else if (lowerQuery.includes("help")) setSelectedMenu("Help");
+    else if (lowerQuery.includes("ticket") || lowerQuery.includes("support"))
       setSelectedMenu("Support / Tickets");
-    }
   };
 
   return (
@@ -115,27 +106,23 @@ const ResultPage = () => {
           },
         }}
       >
+        {/* Logo */}
         <Toolbar
-         sx={{
-         background: "#003366",
-         color: "#fff",
-         justifyContent: "center",
-         }}
-       >
-  <Box
-    component="img"
-    src={logo}
-    alt="Logo"
-    sx={{
-      width: 200, // adjust width as needed
-      height: "auto",
-      objectFit: "contain",
-    }}
-  />
-</Toolbar>
+          sx={{
+            background: "#003366",
+            color: "#fff",
+            justifyContent: "center",
+          }}
+        >
+          <Box
+            component="img"
+            src={logo}
+            alt="Logo"
+            sx={{ width: 200, height: "auto", objectFit: "contain" }}
+          />
+        </Toolbar>
 
-
-        {/* Menu List */}
+        {/* Menu */}
         <Box sx={{ flexGrow: 1, overflow: "auto" }}>
           <List>
             {menuItems.map((item) => (
@@ -147,16 +134,17 @@ const ResultPage = () => {
                   backgroundColor:
                     selectedMenu === item.text ? "#e6f0ff" : "inherit",
                   "&:hover": { backgroundColor: "#e6f0ff" },
+                  cursor: "pointer",
                 }}
               >
-                <ListItemIcon sx={{ color: "#003366" }}>{item.icon}</ListItemIcon>
-                <ListItemText primary={item.text} />
+                <ListItemIcon sx={{ color: "#003366",cursor: "pointer" }}>{item.icon}</ListItemIcon>
+                <ListItemText primary={item.text} sx={{ cursor: "pointer" }} />
               </ListItem>
             ))}
           </List>
         </Box>
 
-        {/* Logout Button */}
+        {/* Logout */}
         <Box sx={{ p: 2 }}>
           <Button
             variant="contained"
@@ -204,24 +192,14 @@ const ResultPage = () => {
         }}
       >
         {/* Topbar */}
-        <AppBar
-          position="static"
-          elevation={0}
-          sx={{ bgcolor: "#fff", borderBottom: "1px solid #ddd", px: 2, flexShrink: 0 }}
-        >
+        <AppBar position="static" elevation={0} sx={{ bgcolor: "#fff", borderBottom: "1px solid #ddd", px: 2 }}>
+          <Typography variant="h6" sx={{ color: "#003366", fontWeight: "bold", mt: "15px", mb: "-40px" }}>
+            {selectedMenu}
+          </Typography>
+
           <Toolbar sx={{ position: "relative", justifyContent: "center" }}>
-            {/* Search Bar */}
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                bgcolor: "#f1f3f4",
-                px: 2,
-                borderRadius: "20px",
-                flexGrow: 1,
-                maxWidth: "500px",
-              }}
-            >
+            {/* Search */}
+            <Box sx={{ display: "flex", alignItems: "center", bgcolor: "#f1f3f4", px: 2, borderRadius: "20px", flexGrow: 1, maxWidth: "500px" }}>
               <InputBase
                 placeholder="What do you want to learn?"
                 fullWidth
@@ -231,15 +209,8 @@ const ResultPage = () => {
               />
             </Box>
 
-            {/* Right side buttons */}
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                position: "absolute",
-                right: 20,
-              }}
-            >
+            {/* Right Buttons */}
+            <Box sx={{ display: "flex", alignItems: "center", position: "absolute", right: 20 }}>
               <IconButton
                 color="primary"
                 onClick={() => {
@@ -247,25 +218,17 @@ const ResultPage = () => {
                   setHasUnreadNotifications(false);
                 }}
               >
-                <Badge
-                  color="error"
-                  variant="dot"
-                  invisible={!hasUnreadNotifications}
-                >
+                <Badge color="error" variant="dot" invisible={!hasUnreadNotifications}>
                   <Notifications />
                 </Badge>
               </IconButton>
 
-              <Avatar
-                sx={{ ml: 2, cursor: "pointer", bgcolor: "#003366" }}
-                onClick={handleProfileClick}
-              />
-              <Menu
-                anchorEl={anchorEl}
-                open={Boolean(anchorEl)}
-                onClose={handleProfileClose}
+              <Avatar sx={{ ml: 2, cursor: "pointer", bgcolor: "#003366" }} onClick={handleProfileClick} />
+              <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleProfileClose}
+              PaperProps={{sx: {width: 130,},}}
               >
                 <MenuItem
+                  sx={{ justifyContent: "center" }}
                   onClick={() => {
                     setSelectedMenu("Profile");
                     handleProfileClose();
@@ -274,6 +237,7 @@ const ResultPage = () => {
                   Profile
                 </MenuItem>
                 <MenuItem
+                  sx={{ justifyContent: "center" }}
                   onClick={async () => {
                     try {
                       await fetch("/api/auth/logout", {
@@ -300,11 +264,7 @@ const ResultPage = () => {
         </AppBar>
 
         {/* Notifications Drawer */}
-        <Drawer
-          anchor="right"
-          open={openNotifications}
-          onClose={() => setOpenNotifications(false)}
-        >
+        <Drawer anchor="right" open={openNotifications} onClose={() => setOpenNotifications(false)}>
           <Box sx={{ width: 350, p: 2 }}>
             <Typography variant="h6" gutterBottom>
               🔔 Notifications
@@ -313,8 +273,8 @@ const ResultPage = () => {
           </Box>
         </Drawer>
 
-        {/* Scrollable Content */}
-        <Box sx={{ flexGrow: 1, overflowY: "auto", p: 2 }}>
+        {/* Page Content */}
+        <Box sx={{ flexGrow: 1, overflowY: "auto", p: 2, pb: "60px" }}>
           {selectedMenu === "Dashboard" && (
             <>
               <Dashboardviewmore setSelectedMenu={setSelectedMenu} />
@@ -324,10 +284,28 @@ const ResultPage = () => {
           {selectedMenu === "My Courses" && <LessonViewer />}
           {selectedMenu === "Assessments" && <QuizTake />}
           {selectedMenu === "Learning History" && <LearningHistory />}
-          {selectedMenu === "Help" && <Help />}
+          {selectedMenu === "Help" && <Help onSupportClick={() => setSelectedMenu("Support / Tickets")} />}
           {selectedMenu === "Login History" && <LoginHistory />}
           {selectedMenu === "Profile" && <ProfilePage />}
           {selectedMenu === "Support / Tickets" && <RaiseTicket />}
+        </Box>
+
+        {/* Footer */}
+        <Box
+          sx={{
+            position: "fixed",
+            bottom: 0,
+            left: 0,
+            width: "100%",
+            py: 1,
+            textAlign: "center",
+            bgcolor: "#f4f6f8",
+            color: "#999",
+            fontSize: "0.85rem",
+            borderTop: "1px solid #ddd",
+          }}
+        >
+          © {new Date().getFullYear()} Glowingrowth Media (GGM). All rights reserved.
         </Box>
       </Box>
     </Box>

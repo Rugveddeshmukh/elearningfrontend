@@ -62,7 +62,13 @@ const LearningHistory = () => {
 
   return (
     <Box maxWidth="1200px" mx="auto" mt={0}>
-      <Typography variant="h6"fontSize={25} mb={2} fontWeight={'bold'} textAlign="center">
+      <Typography
+        variant="h6"
+        fontSize={25}
+        mb={2}
+        fontWeight={"bold"}
+        textAlign="center"
+      >
         Learning History
       </Typography>
 
@@ -79,10 +85,15 @@ const LearningHistory = () => {
                 "Quiz Score",
                 "Quiz Status",
                 "Quiz Date",
+                "My Attempts", // ✅ New Column Added
               ].map((header) => (
                 <TableCell
                   key={header}
-                  sx={{ fontWeight: "bold", textAlign: "center", border: "1px solid #ccc" }}
+                  sx={{
+                    fontWeight: "bold",
+                    textAlign: "center",
+                    border: "1px solid #ccc",
+                  }}
                 >
                   {header}
                 </TableCell>
@@ -92,22 +103,44 @@ const LearningHistory = () => {
 
           <TableBody>
             {currentLogs.map((h, idx) => (
-              <TableRow key={idx} sx={{ backgroundColor: idx % 2 === 0 ? "#fff" : "#f9f9f9" }}>
-                <TableCell sx={{ border: "1px solid #ccc", textAlign: "center" }}>{h.courseTitle}</TableCell>
-                <TableCell sx={{ border: "1px solid #ccc", textAlign: "center" }}>{h.lessonTitle}</TableCell>
+              <TableRow
+                key={idx}
+                sx={{ backgroundColor: idx % 2 === 0 ? "#fff" : "#f9f9f9" }}
+              >
                 <TableCell sx={{ border: "1px solid #ccc", textAlign: "center" }}>
-                  {h.lessonStartDate ? new Date(h.lessonStartDate).toLocaleDateString() : "-"}
+                  {h.courseTitle}
                 </TableCell>
                 <TableCell sx={{ border: "1px solid #ccc", textAlign: "center" }}>
-                  {h.lessonEndDate ? new Date(h.lessonEndDate).toLocaleDateString() : "-"}
+                  {h.lessonTitle}
                 </TableCell>
-                <TableCell sx={{ border: "1px solid #ccc", textAlign: "center" }}>{h.lessonStatus}</TableCell>
-                <TableCell sx={{ border: "1px solid #ccc", textAlign: "center" }}>{h.quizScore ?? "-"}</TableCell>
                 <TableCell sx={{ border: "1px solid #ccc", textAlign: "center" }}>
-                  {h.quizStatus ? (h.quizStatus === "pass" ? "✅ Pass" : "❌ Fail") : "-"}
+                  {h.lessonStartDate
+                    ? new Date(h.lessonStartDate).toLocaleDateString()
+                    : "-"}
+                </TableCell>
+                <TableCell sx={{ border: "1px solid #ccc", textAlign: "center" }}>
+                  {h.lessonEndDate
+                    ? new Date(h.lessonEndDate).toLocaleDateString()
+                    : "-"}
+                </TableCell>
+                <TableCell sx={{ border: "1px solid #ccc", textAlign: "center" }}>
+                  {h.lessonStatus}
+                </TableCell>
+                <TableCell sx={{ border: "1px solid #ccc", textAlign: "center" }}>
+                  {h.quizScore ?? "-"}
+                </TableCell>
+                <TableCell sx={{ border: "1px solid #ccc", textAlign: "center" }}>
+                  {h.quizStatus
+                    ? h.quizStatus === "pass"
+                      ? "✅ Pass"
+                      : "❌ Fail"
+                    : "-"}
                 </TableCell>
                 <TableCell sx={{ border: "1px solid #ccc", textAlign: "center" }}>
                   {h.quizDate ? new Date(h.quizDate).toLocaleString() : "-"}
+                </TableCell>
+                <TableCell sx={{ border: "1px solid #ccc", textAlign: "center" }}>
+                  {h.totalAttempts ?? 0}
                 </TableCell>
               </TableRow>
             ))}
@@ -121,14 +154,26 @@ const LearningHistory = () => {
         justifyContent="space-between"
         alignItems="center"
         mt={0}
-        sx={{ border: "1px solid #ccc", backgroundColor: "#fff", padding: "8px 16px", borderRadius: "4px" }}
+        sx={{
+          border: "1px solid #ccc",
+          backgroundColor: "#fff",
+          padding: "8px 16px",
+          borderRadius: "4px",
+        }}
       >
         <Typography>
-          Showing {history.length === 0 ? 0 : indexOfFirstLog + 1}-{Math.min(indexOfLastLog, history.length)}
+          Showing{" "}
+          {history.length === 0 ? 0 : indexOfFirstLog + 1}-
+          {Math.min(indexOfLastLog, history.length)}
         </Typography>
 
         {totalPages > 1 && (
-          <Pagination count={totalPages} page={page} onChange={handlePageChange} color="primary" />
+          <Pagination
+            count={totalPages}
+            page={page}
+            onChange={handlePageChange}
+            color="primary"
+          />
         )}
       </Box>
     </Box>

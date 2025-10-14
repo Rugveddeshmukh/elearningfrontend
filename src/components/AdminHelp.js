@@ -151,10 +151,8 @@ const AdminHelp = () => {
             onClick={handleAddFAQ}
             sx={{
               mt: 2,
-              textTransform: "none",
-              bgcolor: "#003366",
-              width:'40%',
-              "&:hover": { bgcolor: "#002244" },
+              fontWeight:"bold",
+              background:"#2E7D32"
             }}
           >
             Add FAQ
@@ -235,10 +233,8 @@ const AdminHelp = () => {
             color="primary"
             sx={{
               mt: 2,
-              textTransform: "none",
-              bgcolor: "#003366",
-               width:'40%',
-              "&:hover": { bgcolor: "#002244" },
+              fontWeight:"bold",
+              background:"#2E7D32"
             }}
             onClick={handleAddManual}
           >

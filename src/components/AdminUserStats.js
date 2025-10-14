@@ -30,7 +30,7 @@ const CARD_GRADIENTS = [
 // Vibrant colors for pie charts
 const PIE_COLORS = ["#42a5f5", "#66bb6a", "#ffa726", "#ef5350"];
 
-const AdminDashboardStats = () => {
+const AdminDashboardStats = ({ setSelectedMenu }) => {
   const { token } = useAuth();
   const [loading, setLoading] = useState(true);
 
@@ -125,6 +125,10 @@ const AdminDashboardStats = () => {
     }
   };
 
+  const handleMenuRedirect = (menuName) => {
+    if (setSelectedMenu) setSelectedMenu(menuName);
+  };
+
   if (loading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
@@ -133,13 +137,14 @@ const AdminDashboardStats = () => {
     );
   }
 
-  const renderCard = (index, title, value) => (
+  const renderCard = (index, title, value, onViewClick) => (
     <Card
       sx={{
         borderRadius: 3,
         height: 180,
         width: 270,
         display: "flex",
+        flexDirection: "column",
         justifyContent: "center",
         alignItems: "center",
         textAlign: "center",
@@ -151,11 +156,23 @@ const AdminDashboardStats = () => {
           transform: "scale(1.08)",
           boxShadow: "0 15px 30px rgba(0,0,0,0.4), 0 10px 15px rgba(0,0,0,0.3)",
         },
+        cursor: "pointer",
       }}
+      onClick={onViewClick}
     >
-      <CardContent sx={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center" }}>
+      <CardContent sx={{ display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center" }}>
         <Typography variant="h6" sx={{ fontWeight: "600", letterSpacing: "0.5px" }}>{title}</Typography>
         <Typography variant="h3" sx={{ fontWeight: "bold", mt: 1 }}>{value}</Typography>
+        <Typography
+          variant="body2"
+          sx={{
+            mt: 2,
+            fontWeight:"bold",
+            cursor: "pointer",
+          }}
+        >
+          View More
+        </Typography>
       </CardContent>
     </Card>
   );
@@ -175,10 +192,10 @@ const AdminDashboardStats = () => {
     <Box p={3} display="flex" flexDirection="column" alignItems="center">
       {/* Top Row: Summary Cards */}
       <Grid container spacing={3} justifyContent="center" mb={4}>
-        {renderCard(0, "Total Registered Users", userStats.totalUsers)}
-        {renderCard(1, "Total Lessons Uploaded", lessonStats.totalLessons)}
-        {renderCard(2, "Total Assessments Uploaded", quizStats.totalUploaded)}
-        {renderCard(3, "Total Tickets", ticketStats.totalTickets)}
+        {renderCard(0, "Total Registered Users", userStats.totalUsers, () => handleMenuRedirect("User Management"))}
+        {renderCard(1, "Total Lessons Uploaded", lessonStats.totalLessons, () => handleMenuRedirect("Lesson Management"))}
+        {renderCard(2, "Total Assessments Uploaded", quizStats.totalUploaded, () => handleMenuRedirect("Assessment Management"))}
+        {renderCard(3, "Total Tickets", ticketStats.totalTickets, () => handleMenuRedirect("Support Tickets"))}
       </Grid>
 
       {/* Pie Charts */}

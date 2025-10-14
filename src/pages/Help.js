@@ -11,13 +11,15 @@ import {
   ListItemButton,
   ListItemText,
   Divider,
+  Button,
 } from "@mui/material";
+import { SupportAgent } from "@mui/icons-material";
 import AddIcon from "@mui/icons-material/Add";
 import RemoveIcon from "@mui/icons-material/Remove";
 import api from "../utils/api";
 import { useAuth } from "../context/AuthContext";
 
-const Help = () => {
+const Help = ({ onSupportClick }) => {
   const [faqs, setFaqs] = useState([]);
   const [manuals, setManuals] = useState([]);
   const [search, setSearch] = useState("");
@@ -48,7 +50,14 @@ const Help = () => {
   };
 
   return (
-    <Box p={1} maxWidth="900px" mx="auto">
+    <Box
+      p={1}
+      maxWidth="900px"
+      mx="auto"
+      display="flex"
+      flexDirection="column"
+      minHeight="80vh"
+    >
       {/* Page Title */}
       <Typography
         variant="h4"
@@ -80,63 +89,65 @@ const Help = () => {
         Frequently Asked Questions
       </Typography>
 
-      {filteredFaqs.length > 0 ? (
-        filteredFaqs.map((f, index) => (
-          <Accordion
-            key={f._id}
-            expanded={expandedFaq === index}
-            onChange={handleFaqChange(index)}
-            sx={{
-              mb: 2,
-              borderRadius: "10px",
-              overflow: "hidden",
-              boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-              "&:before": { display: "none" },
-              transition: "all 0.3s ease",
-            }}
-          >
-            <AccordionSummary
-              expandIcon={
-                expandedFaq === index ? (
-                  <RemoveIcon sx={{ color: "black" }} />
-                ) : (
-                  <AddIcon sx={{ color: "black" }} />
-                )
-              }
+      <Box flexGrow={1} overflow="auto" mb={3}>
+        {filteredFaqs.length > 0 ? (
+          filteredFaqs.map((f, index) => (
+            <Accordion
+              key={f._id}
+              expanded={expandedFaq === index}
+              onChange={handleFaqChange(index)}
               sx={{
-                backgroundColor: expandedFaq === index ? "#f4c542" : "#fff",
-                transition: "background-color 0.3s ease",
-                "& .MuiAccordionSummary-content": { margin: "12px 0" },
+                mb: 2,
+                borderRadius: "10px",
+                overflow: "hidden",
+                boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                "&:before": { display: "none" },
+                transition: "all 0.3s ease",
               }}
             >
-              <Typography fontWeight="bold" color="#000">
-                {f.question}
-              </Typography>
-            </AccordionSummary>
-            <AccordionDetails
-              sx={{
-                backgroundColor: "#fffaf0",
-                color: "#333",
-                lineHeight: 1.7,
-              }}
-            >
-              <Typography>{f.answer}</Typography>
-            </AccordionDetails>
-          </Accordion>
-        ))
-      ) : (
-        <Typography color="text.secondary">
-          No FAQs found for your search.
-        </Typography>
-      )}
+              <AccordionSummary
+                expandIcon={
+                  expandedFaq === index ? (
+                    <RemoveIcon sx={{ color: "black" }} />
+                  ) : (
+                    <AddIcon sx={{ color: "black" }} />
+                  )
+                }
+                sx={{
+                  backgroundColor: expandedFaq === index ? "#f4c542" : "#fff",
+                  transition: "background-color 0.3s ease",
+                  "& .MuiAccordionSummary-content": { margin: "12px 0" },
+                }}
+              >
+                <Typography fontWeight="bold" color="#000">
+                  {f.question}
+                </Typography>
+              </AccordionSummary>
+              <AccordionDetails
+                sx={{
+                  backgroundColor: "#fffaf0",
+                  color: "#333",
+                  lineHeight: 1.7,
+                }}
+              >
+                <Typography>{f.answer}</Typography>
+              </AccordionDetails>
+            </Accordion>
+          ))
+        ) : (
+          <Typography color="text.secondary">
+            No FAQs found for your search.
+          </Typography>
+        )}
+      </Box>
 
       {/* User Manuals Section */}
       {manuals.length > 0 && (
         <>
           <Typography
             variant="h6"
-            mt={5}
-            mb={3}
+            mt={3}
+            mb={2}
             textAlign="center"
             color="#333"
             sx={{ fontSize: "24px", fontWeight: "bold" }}
@@ -144,7 +155,6 @@ const Help = () => {
             User Manuals
           </Typography>
 
-          {/* Unified Border Wrapper */}
           <Paper
             sx={{
               display: "flex",
@@ -152,6 +162,8 @@ const Help = () => {
               borderRadius: 2,
               boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
               overflow: "hidden",
+              flexGrow: 1,
+              mb: 2,
             }}
           >
             {/* Sidebar */}
@@ -161,6 +173,8 @@ const Help = () => {
                 borderRight: { xs: "none", md: "1px solid #ddd" },
                 p: 2,
                 backgroundColor: "#fff",
+                maxHeight: { xs: "200px", md: "auto" },
+                overflow: "auto",
               }}
             >
               <Typography
@@ -217,6 +231,7 @@ const Help = () => {
                 flexGrow: 1,
                 p: 3,
                 backgroundColor: "#fff",
+                overflow: "auto",
               }}
             >
               {selectedManual ? (
@@ -239,6 +254,27 @@ const Help = () => {
           </Paper>
         </>
       )}
+
+      {/* Support / Tickets Button */}
+      <Box textAlign="center" mt={3}>
+        <Button
+          variant="contained"
+          onClick={onSupportClick}
+          startIcon={<SupportAgent />}
+          sx={{
+            bgcolor: "#E53935",
+            fontWeight:'bold',
+            color: "#fff",
+            textTransform: "none",
+            borderRadius: "30px",
+            px: 4,
+            py: 1.5,
+            "&:hover": { bgcolor: "#E53935" },
+          }}
+        >
+          Contact Support
+        </Button>
+      </Box>
     </Box>
   );
 };

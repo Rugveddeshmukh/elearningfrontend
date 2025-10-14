@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { 
   Box, Typography, TextField, Button, FormControl, InputLabel, 
-  Select, MenuItem, Card, CardContent, CardActions 
+  Select, MenuItem, Card, CardContent, CardActions,
+  Dialog, DialogTitle, DialogContent, DialogActions as DialogAct
 } from '@mui/material';
+import { Delete } from "@mui/icons-material";
 import api from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 
@@ -16,31 +18,31 @@ export default function AdminQuizUpload() {
   const [passPercentage, setPassPercentage] = useState(60);
   const [durationMinutes, setDurationMinutes] = useState(0);
   const [file, setFile] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
 
-  // Fetch courses on mount
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [quizToDelete, setQuizToDelete] = useState(null);
+
+  // Fetch courses
   useEffect(() => {
     api.get('/course', { headers: { Authorization: `Bearer ${token}` } })
       .then(res => setCourses(res.data || []))
       .catch(err => console.error(err));
   }, [token]);
 
-  // Fetch lessons when course changes
+  // Fetch lessons
   useEffect(() => {
-    if (!courseId) {
-      setLessons([]);
-      setLessonId('');
-      return;
-    }
+    if (!courseId) { setLessons([]); setLessonId(''); return; }
     api.get(`/lesson/${courseId}`, { headers: { Authorization: `Bearer ${token}` } })
       .then(res => setLessons(res.data || []))
-      .catch(err => console.error('Error fetching lessons', err));
+      .catch(err => console.error(err));
   }, [courseId, token]);
 
   // Fetch quizzes
   useEffect(() => {
     api.get('/quiz', { headers: { Authorization: `Bearer ${token}` } })
       .then(res => setQuizzes(res.data || []))
-      .catch(err => console.error('Error fetching quizzes', err));
+      .catch(err => console.error(err));
   }, [token]);
 
   const handleSubmit = async () => {
@@ -65,11 +67,17 @@ export default function AdminQuizUpload() {
     }
   };
 
-  const handleDelete = async (quizId) => {
-    if (!window.confirm("Are you sure you want to delete this quiz?")) return;
+  const openDeleteDialog = (quiz) => {
+    setQuizToDelete(quiz);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!quizToDelete) return;
     try {
-      await api.delete(`/quiz/${quizId}`, { headers: { Authorization: `Bearer ${token}` } });
-      setQuizzes(prev => prev.filter(q => q._id !== quizId));
+      await api.delete(`/quiz/${quizToDelete._id}`, { headers: { Authorization: `Bearer ${token}` } });
+      setQuizzes(prev => prev.filter(q => q._id !== quizToDelete._id));
+      setDeleteDialogOpen(false);
       alert("Quiz deleted successfully");
     } catch (err) {
       alert(err.response?.data?.message || err.message);
@@ -78,20 +86,14 @@ export default function AdminQuizUpload() {
 
   return (
     <Box p={1} sx={{ maxWidth: 1200, mx: 'auto' }}>
-      {/* Centered Upload Quiz CSV */}
-      <Typography 
-        variant="h5" 
-        sx={{ textAlign: 'center', fontWeight: 'bold', color: "#003366", mb: 1 }}
-      >
-       Add Assessment CSV
+      <Typography variant="h5" sx={{ textAlign: 'center', fontWeight: 'bold', color: "#003366", mb: 1 }}>
+        Add Assessment CSV
       </Typography>
 
       <FormControl fullWidth sx={{ mt: 2 }}>
         <InputLabel>Select Course</InputLabel>
         <Select value={courseId} onChange={(e) => setCourseId(e.target.value)}>
-          {courses.map(c => (
-            <MenuItem key={c._id} value={c._id}>{c.title}</MenuItem>
-          ))}
+          {courses.map(c => <MenuItem key={c._id} value={c._id}>{c.title}</MenuItem>)}
         </Select>
       </FormControl>
 
@@ -104,72 +106,71 @@ export default function AdminQuizUpload() {
         </Select>
       </FormControl>
 
-      <TextField
-        type="number"
-        label="Pass Percentage"
-        fullWidth
-        sx={{ mt: 2 }}
-        value={passPercentage}
-        onChange={(e) => setPassPercentage(e.target.value)}
-      />
+      <TextField type="number" label="Pass Percentage" fullWidth sx={{ mt: 2 }}
+        value={passPercentage} onChange={(e) => setPassPercentage(e.target.value)} />
 
-      <TextField
-        type="number"
-        label="Duration (minutes, 0 = no limit)"
-        fullWidth
-        sx={{ mt: 2 }}
-        value={durationMinutes}
-        onChange={(e) => setDurationMinutes(e.target.value)}
-      />
+      <TextField type="number" label="Duration (minutes, 0 = no limit)" fullWidth sx={{ mt: 2 }}
+        value={durationMinutes} onChange={(e) => setDurationMinutes(e.target.value)} />
 
-      {/* Centered file input + Upload button */}
-      <Box sx={{
-        mt: 2,
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        gap: 2
-        
-      }}>
-        <p style={{marginBottom:"35px"}}>Only CSV file Uploaded</p>
-        <input 
-          type="file" 
-          accept=".csv" 
-          onChange={(e) => setFile(e.target.files?.[0] || null)} 
-          style={{ width: "400px", height: "35px" }} 
-        />
-        <Button variant="contained" onClick={handleSubmit} sx={{width:"40%", height: "40px" }}>
-         Submit
+      <Box sx={{ mt: 2, display: "flex", justifyContent: "center", alignItems: "center", gap: 2 }}>
+        <p style={{ marginBottom: "35px" }}>Only CSV file Uploaded</p>
+        <input type="file" accept=".csv" onChange={(e) => setFile(e.target.files?.[0] || null)}
+          style={{ width: "400px", height: "35px" }} />
+        <Button variant="contained" onClick={handleSubmit} sx={{ width: "40%", height: "40px", fontWeight: "bold", background: "#2E7D32" }}>
+          Submit
         </Button>
       </Box>
 
-      {/* Centered All Quizzes title */}
-      <Typography 
-        variant="h5" 
-        sx={{ textAlign: 'center', fontWeight: 'bold', color: "#003366", mt: 5, mb: 3 }}
-      >
-        All Assessment
-      </Typography>
-
-      {/* Quiz List - 4 per row */}
-      <Box sx={{
-        display: "grid",
-        gridTemplateColumns: "repeat(auto-fill, minmax(250px, 1fr))",
-        gap: 2
-      }}>
-        {quizzes.map(q => (
-          <Card key={q._id} sx={{ borderRadius: 2 }}>
-            <CardContent>
-              <Typography variant="subtitle1">{q.lessonId?.title || "Untitled Lesson"}</Typography>
-              <Typography variant="body2">Questions: {q.questions?.length || "—"}</Typography>
-              <Typography variant="body2">Pass: {q.passPercentage}%</Typography>
-            </CardContent>
-            <CardActions>
-              <Button color="error" onClick={() => handleDelete(q._id)}>Delete</Button>
-            </CardActions>
-          </Card>
-        ))}
+      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", position: "relative", flexWrap: "wrap", mt: 5, mb: 3 }}>
+        <Typography variant="h6" sx={{ fontWeight: "bold", color: "#003366", textAlign: "center", flex: 1, fontSize: "24px" }}>
+          All Assessment
+        </Typography>
+        <Box sx={{ position: { xs: "static", sm: "absolute" }, right: { sm: 0 }, mt: { xs: 1, sm: 0 } }}>
+          <TextField size="small" placeholder="Search lesson..." variant="outlined"
+            value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
+            sx={{ width: { xs: "100%", sm: "250px" }, backgroundColor: "#fff" }} />
+        </Box>
       </Box>
+
+      <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(250px, 1fr))", gap: 2 }}>
+        {quizzes.filter(q => q.lessonId?.title?.toLowerCase().includes(searchTerm.toLowerCase()))
+          .map(q => (
+            <Card key={q._id} sx={{ borderRadius: 2, height: 170, display: "flex", flexDirection: "column", justifyContent: "space-between", alignItems: "center", textAlign: "center", p: 1 }}>
+              <CardContent sx={{ flexGrow: 1, width: "100%", p: 1 }}>
+                <Typography variant="subtitle1" sx={{ fontWeight: "bold", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                  {q.lessonId?.title || "Untitled Lesson"}
+                </Typography>
+                <Typography variant="body2" sx={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                  Questions: {q.questions?.length || "—"}
+                </Typography>
+                <Typography variant="body2" sx={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                  Pass: {q.passPercentage}%
+                </Typography>
+              </CardContent>
+
+              <CardActions sx={{ justifyContent: "center", p: 2 }}>
+                <Button variant="contained" onClick={() => openDeleteDialog(q)}
+                  sx={{ backgroundColor: "#2E7D32", color: "#fff", fontWeight: "bold", "&:hover": { backgroundColor: "#1B5E20" }, borderRadius: "20px", px: 3 }}>
+                  Delete
+                </Button>
+              </CardActions>
+            </Card>
+          ))}
+      </Box>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
+        <DialogTitle>Are you sure you want to delete this Assessment?</DialogTitle>
+        <DialogContent>
+          <Typography sx={{ fontWeight: "bold", mt: 1 }}>
+            {quizToDelete?.lessonId?.title || "Untitled Lesson"}
+          </Typography>
+        </DialogContent>
+        <DialogAct>
+          <Button onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
+          <Button color="error" variant="contained" onClick={handleDeleteConfirm}>OK</Button>
+        </DialogAct>
+      </Dialog>
     </Box>
   );
 }

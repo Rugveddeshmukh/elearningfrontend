@@ -18,17 +18,18 @@ import {
 
 import {
   Dashboard as DashboardIcon,
+  People as PeopleIcon,
   School as SchoolIcon,
-  History as HistoryIcon,
-  HelpOutline as HelpIcon,
-  AccountCircle as CertificateIcon,
-  Explore as UserIcon,
-  CalendarMonth as CalendarIcon,
-  CloudDownload as DownloadIcon,
-  Feedback as FeedbackIcon,
-  UploadFile as UploadIcon,
-  Report as ReportIcon,
-  Assignment as TicketsIcon,
+  MenuBook as MenuBookIcon,
+  Quiz as QuizIcon,
+  Timeline as TimelineIcon,
+  HistoryEdu as HistoryEduIcon,
+  WorkspacePremium as WorkspacePremiumIcon,
+  NotificationsActive as NotificationsActiveIcon,
+  // RateReview as RateReviewIcon,
+  UploadFile as UploadFileIcon,
+  FileDownload as FileDownloadIcon,
+  SupportAgent as SupportAgentIcon,
   ExitToApp,
 } from "@mui/icons-material";
 
@@ -44,6 +45,8 @@ import AdminSendNotification from "../components/AdminSendNotification";
 import DownloadUsersExcel from "../DownloadReport/DownloadUsersExcel";
 import DownloadQuizExcel from "../DownloadReport/DownloadQuizExcel";
 import AdminUserStats from "../components/AdminUserStats";
+import AdminLearningHistory from "../components/AdminLearningHistory";
+
 
 const drawerWidth = 240;
 
@@ -53,18 +56,18 @@ const ResultPage = () => {
 
   const menuItems = [
     { text: "Dashboard", icon: <DashboardIcon /> },
-    { text: "User Management", icon: <UserIcon /> },
-    { text: "Course Management", icon: <SchoolIcon /> },
-    { text: "Lesson Management", icon: <HistoryIcon /> },
-    { text: "Assessment Management", icon: <HelpIcon /> },
-    { text: "Assessment Status Tracker", icon: <CalendarIcon /> },
-    { text: "Certificates", icon: <CertificateIcon /> },
-    { text: "Reports & Analytics", icon: <ReportIcon /> },
-    { text: "Notifications Manager", icon: <ReportIcon /> },
-    // { text: "Reviews & Feedback", icon: <FeedbackIcon /> },
-    { text: "Help Document Upload", icon: <UploadIcon /> },
-    { text: "Download Reports", icon: <DownloadIcon /> },
-    { text: "Support Tickets", icon: <TicketsIcon /> },
+    { text: "User Management", icon: <PeopleIcon /> },
+    { text: "Course Management", icon: <SchoolIcon />  },
+    { text: "Lesson Management", icon:  <MenuBookIcon /> },
+    { text: "Assessment Management", icon: <QuizIcon /> },
+    { text: "Assessment Status Tracker", icon: <TimelineIcon /> },
+    { text: "All Learning Histroy", icon: <HistoryEduIcon /> },
+    { text: "Certificates", icon: <WorkspacePremiumIcon /> },
+    { text: "Notifications Manager", icon: <NotificationsActiveIcon /> },
+    // { text: "Reviews & Feedback", icon: <RateReviewIcon /> },
+    { text: "Help Document Upload", icon: <UploadFileIcon /> },
+    { text: "Download Reports", icon: <FileDownloadIcon /> },
+    { text: "Support Tickets", icon: <SupportAgentIcon /> },
   ];
 
   const handleMenuClick = (menu) => {
@@ -121,12 +124,13 @@ const ResultPage = () => {
                   backgroundColor:
                     selectedMenu === item.text ? "#e6f0ff" : "inherit",
                   "&:hover": { backgroundColor: "#e6f0ff" },
+                  cursor: "pointer",
                 }}
               >
-                <ListItemIcon sx={{ color: "#003366" }}>
+                <ListItemIcon sx={{ color: "#003366",cursor: "pointer" }}>
                   {item.icon}
                 </ListItemIcon>
-                <ListItemText primary={item.text} />
+                <ListItemText primary={item.text} sx={{ cursor: "pointer" }} />
               </ListItem>
             ))}
           </List>
@@ -246,18 +250,18 @@ const ResultPage = () => {
 
         {/* Scrollable Content */}
         <Box sx={{ flexGrow: 1, overflowY: "auto", p: 2 }}>
-          {selectedMenu === "Dashboard" && <AdminUserStats />}
+          {selectedMenu === "Dashboard" && <AdminUserStats  setSelectedMenu={setSelectedMenu}/>}
           {selectedMenu === "User Management" && <UserList />}
           {selectedMenu === "Course Management" && <CourseManager />}
           {selectedMenu === "Lesson Management" && <PPTLessonManager />}
           {selectedMenu === "Assessment Management" && <QuizManager />}
           {selectedMenu === "Assessment Status Tracker" && <AdminQuizStats />}
+          {selectedMenu === "All Learning Histroy" && <AdminLearningHistory/>
+          }
           {selectedMenu === "Certificates" && (
-            <Typography variant="h5">Coming Soon</Typography>
-          )}
-          {selectedMenu === "Reports & Analytics" && (
-            <Typography variant="h5">Comming Soon</Typography>
-          )}
+          <Typography variant="h5">Comming Soon</Typography>
+          )
+         }
           {selectedMenu === "Notifications Manager" && <AdminSendNotification />}
           {selectedMenu === "Reviews & Feedback" && (
             <Typography variant="h5">User Feedback & Ratings</Typography>

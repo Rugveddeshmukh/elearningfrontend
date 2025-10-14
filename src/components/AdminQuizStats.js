@@ -11,7 +11,13 @@ import {
   TextField,
   Button,
   Paper,
+  IconButton,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from '@mui/material';
+import { Delete } from '@mui/icons-material';
 import api from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 
@@ -21,6 +27,11 @@ const AdminQuizStats = () => {
   const [error, setError] = useState(null);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const [searchName, setSearchName] = useState('');
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [selectedQuizId, setSelectedQuizId] = useState(null);
+  const [selectedUserId, setSelectedUserId] = useState(null);
+  const [selectedUserName, setSelectedUserName] = useState('');
   const { token } = useAuth();
 
   const fetchStats = async () => {
@@ -51,9 +62,40 @@ const AdminQuizStats = () => {
     fetchStats();
   }, [token]);
 
+  const filteredStats = stats
+    .map((quiz) => ({
+      ...quiz,
+      userStats: (quiz.userStats || []).filter((u) =>
+        u.user?.fullName?.toLowerCase().includes(searchName.toLowerCase())
+      ),
+    }))
+    .filter((q) => (q.userStats || []).length > 0);
+
+  // 🔹 Open delete dialog
+  const openDeleteDialog = (quizId, userId, userName) => {
+    setSelectedQuizId(quizId);
+    setSelectedUserId(userId);
+    setSelectedUserName(userName);
+    setDeleteDialogOpen(true);
+  };
+
+  // 🔹 Confirm delete
+  const handleDeleteConfirm = async () => {
+    if (!selectedQuizId || !selectedUserId) return;
+    try {
+      await api.delete(`/quiz/${selectedQuizId}/user/${selectedUserId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setDeleteDialogOpen(false);
+      fetchStats();
+      alert('User stat deleted successfully');
+    } catch (err) {
+      alert(err.response?.data?.message || err.message);
+    }
+  };
+
   return (
     <Box maxWidth="95%" mx="auto" mt={2}>
-      {/* Header */}
       <Typography
         variant="h5"
         mb={2}
@@ -64,45 +106,46 @@ const AdminQuizStats = () => {
         Quiz Stats
       </Typography>
 
-      {/* Date Filter aligned right */}
-      <Box
-        display="flex"
-        gap={2}
-        alignItems="center"
-        flexWrap="wrap"
-        justifyContent="flex-end"
-        mb={1}
-      >
+      <Box display="flex" justifyContent="space-between" flexWrap="wrap" mb={1}>
         <TextField
-          label="Start Date"
-          type="date"
-          InputLabelProps={{ shrink: true }}
-          value={startDate}
-          onChange={(e) => setStartDate(e.target.value)}
+          label="Search by Name"
           size="small"
-          sx={{ minWidth: 150 }}
+          value={searchName}
+          onChange={(e) => setSearchName(e.target.value)}
+          sx={{ minWidth: 200 }}
         />
-        <TextField
-          label="End Date"
-          type="date"
-          InputLabelProps={{ shrink: true }}
-          value={endDate}
-          onChange={(e) => setEndDate(e.target.value)}
-          size="small"
-          sx={{ minWidth: 150 }}
-        />
-        <Button
-          variant="contained"
-          onClick={fetchStats}
-          size="medium"
-          sx={{
-            bgcolor: '#003366',
-            '&:hover': { bgcolor: '#002244' },
-            textTransform: 'none',
-          }}
-        >
-          FILTER
-        </Button>
+        <Box display="flex" gap={2} flexWrap="wrap">
+          <TextField
+            label="Start Date"
+            type="date"
+            InputLabelProps={{ shrink: true }}
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+            size="small"
+            sx={{ minWidth: 150 }}
+          />
+          <TextField
+            label="End Date"
+            type="date"
+            InputLabelProps={{ shrink: true }}
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+            size="small"
+            sx={{ minWidth: 150 }}
+          />
+          <Button
+            variant="contained"
+            onClick={fetchStats}
+            size="medium"
+            sx={{
+              bgcolor: '#003366',
+              '&:hover': { bgcolor: '#002244' },
+              textTransform: 'none',
+            }}
+          >
+            FILTER
+          </Button>
+        </Box>
       </Box>
 
       {loading ? (
@@ -146,11 +189,12 @@ const AdminQuizStats = () => {
                 <TableCell>User Fail</TableCell>
                 <TableCell>User Attempts</TableCell>
                 <TableCell>User Avg Score</TableCell>
+                <TableCell>Action</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {stats.length > 0 ? (
-                stats.flatMap((quiz) =>
+              {filteredStats.length > 0 ? (
+                filteredStats.flatMap((quiz) =>
                   (quiz.userStats ?? []).map((u, i) => (
                     <TableRow key={`${quiz._id}-${u.user._id}-${i}`}>
                       <TableCell>{u.user?.fullName || 'N/A'}</TableCell>
@@ -159,12 +203,22 @@ const AdminQuizStats = () => {
                       <TableCell>{u.fail}</TableCell>
                       <TableCell>{u.totalAttempts}</TableCell>
                       <TableCell>{u.averageScore}</TableCell>
+                      <TableCell>
+                        <IconButton
+                          color="error"
+                          onClick={() =>
+                            openDeleteDialog(quiz._id, u.user._id, u.user?.fullName)
+                          }
+                        >
+                          <Delete />
+                        </IconButton>
+                      </TableCell>
                     </TableRow>
                   ))
                 )
               ) : (
                 <TableRow>
-                  <TableCell colSpan={6} align="center">
+                  <TableCell colSpan={7} align="center">
                     No quizzes found
                   </TableCell>
                 </TableRow>
@@ -173,6 +227,29 @@ const AdminQuizStats = () => {
           </Table>
         </Paper>
       )}
+
+      {/* 🟢 Delete Confirmation Dialog */}
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={() => setDeleteDialogOpen(false)}
+      >
+        <DialogTitle>Are you sure you want to delete this user stat?</DialogTitle>
+        <DialogContent>
+          <Typography sx={{ fontWeight: 'bold', mt: 1 }}>
+            {selectedUserName || 'N/A'}
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
+          <Button
+            color="error"
+            variant="contained"
+            onClick={handleDeleteConfirm}
+          >
+            OK
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

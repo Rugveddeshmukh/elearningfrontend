@@ -12,8 +12,12 @@ import {
   Button,
   Box,
   TextField,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from "@mui/material";
-import { Delete } from "@mui/icons-material";
+import { Delete, Edit } from "@mui/icons-material";
 import api from "../utils/api";
 import { useAuth } from "../context/AuthContext";
 
@@ -21,11 +25,25 @@ const UserList = () => {
   const [users, setUsers] = useState([]);
   const { token } = useAuth();
 
-  // Date range filters
   const [startDate, setStartDate] = useState("2025-01-01");
   const [endDate, setEndDate] = useState("2025-12-31");
+  const [searchTerm, setSearchTerm] = useState("");
 
-  // Fetch users from backend with date filter
+  // Delete dialog states
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState(null);
+
+  // Edit dialog states
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [userToEdit, setUserToEdit] = useState(null);
+  const [editForm, setEditForm] = useState({
+    fullName: "",
+    email: "",
+    contactNo: "",
+    designation: "",
+    teamLeader: "",
+  });
+
   const fetchUsers = async () => {
     try {
       const res = await api.get("/admin/all-users", {
@@ -38,15 +56,24 @@ const UserList = () => {
     }
   };
 
-  // Delete user
-  const handleDelete = async (userId) => {
-    await api.delete(`/admin/users/${userId}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+  useEffect(() => {
     fetchUsers();
+  }, [startDate, endDate]);
+
+  const handleDelete = async () => {
+    if (!userToDelete) return;
+    try {
+      await api.delete(`/admin/users/${userToDelete._id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setDeleteDialogOpen(false);
+      setUserToDelete(null);
+      fetchUsers();
+    } catch (err) {
+      console.error("Error deleting user:", err);
+    }
   };
 
-  // Approve user
   const handleApprove = async (userId) => {
     try {
       await api.put(`/admin/users/${userId}/approve`, {}, {
@@ -58,7 +85,6 @@ const UserList = () => {
     }
   };
 
-  // Toggle active/inactive status
   const handleToggleStatus = async (userId) => {
     try {
       await api.put(`/admin/users/${userId}/toggle-status`, {}, {
@@ -70,45 +96,84 @@ const UserList = () => {
     }
   };
 
-  useEffect(() => {
-    fetchUsers();
-  }, [startDate, endDate]);
+  const handleEditOpen = (user) => {
+    setUserToEdit(user);
+    setEditForm({
+      fullName: user.fullName || "",
+      email: user.email || "",
+      contactNo: user.contactNo || "",
+      designation: user.designation || "",
+      teamLeader: user.teamLeader || "",
+    });
+    setEditDialogOpen(true);
+  };
+
+  const handleEditSave = async () => {
+    try {
+      await api.put(
+        `/admin/users/${userToEdit._id}/edit`,
+        editForm,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setEditDialogOpen(false);
+      setUserToEdit(null);
+      fetchUsers();
+    } catch (err) {
+      console.error("Error updating user:", err);
+    }
+  };
+
+  const filteredUsers = users.filter((user) =>
+    user.fullName?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
     <Paper sx={{ p: 2.1, mt: 1, overflowX: "auto" }}>
-      {/* Title - Center Aligned */}
+      {/* Title */}
       <Box display="flex" justifyContent="center" mb={0}>
         <Typography
           variant="h6"
-          sx={{
-            fontWeight: "bold",
-            color: "#003366",
-            textAlign: "center",
-          }}
+          sx={{ fontWeight: "bold", color: "#003366", textAlign: "center" }}
         >
           User List
         </Typography>
       </Box>
 
-      {/* Date Filter Section */}
-      <Box display="flex" justifyContent="flex-end" alignItems="center" mb={1} gap={2}>
+      {/* Search + Date Filter Section */}
+      <Box
+        display="flex"
+        alignItems="center"
+        justifyContent="space-between"
+        mb={2}
+        gap={2}
+        flexWrap="wrap"
+      >
         <TextField
-          type="date"
-          label="Start Date"
+          type="text"
+          label="Search by Name"
           size="small"
-          value={startDate}
-          onChange={(e) => setStartDate(e.target.value)}
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          sx={{ minWidth: 200 }}
         />
-        <TextField
-          type="date"
-          label="End Date"
-          size="small"
-          value={endDate}
-          onChange={(e) => setEndDate(e.target.value)}
-        />
-        <Button variant="contained" onClick={fetchUsers}>
-          Filter
-        </Button>
+
+        <Box display="flex" alignItems="center" gap={1}>
+          <TextField
+            type="date"
+            size="small"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+          />
+          <TextField
+            type="date"
+            size="small"
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+          />
+          <Button variant="contained" onClick={fetchUsers}>
+            Filter
+          </Button>
+        </Box>
       </Box>
 
       {/* User Table */}
@@ -123,17 +188,9 @@ const UserList = () => {
               textAlign: "center",
               fontSize: "14px",
             },
-            "& th": {
-              backgroundColor: "#f1f5f9",
-              fontWeight: "bold",
-              color: "#003366",
-            },
-            "& tr:nth-of-type(even)": {
-              backgroundColor: "#f9fafb",
-            },
-            "& tr:hover": {
-              backgroundColor: "#e8f0fe",
-            },
+            "& th": { backgroundColor: "#f1f5f9", fontWeight: "bold", color: "#003366" },
+            "& tr:nth-of-type(even)": { backgroundColor: "#f9fafb" },
+            "& tr:hover": { backgroundColor: "#e8f0fe" },
           }}
         >
           <TableHead>
@@ -147,6 +204,7 @@ const UserList = () => {
                 "Designation",
                 "Approval",
                 "Active/Inactive",
+                "Online Status",
                 "Approve Date",
                 "Last Login",
                 "Actions",
@@ -155,34 +213,32 @@ const UserList = () => {
               ))}
             </TableRow>
           </TableHead>
-
           <TableBody>
-            {users.length === 0 ? (
+            {filteredUsers.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={11} sx={{ textAlign: "center", border: "1px solid #ccc" }}>
+                <TableCell colSpan={12} sx={{ textAlign: "center", border: "1px solid #ccc" }}>
                   No users found
                 </TableCell>
               </TableRow>
             ) : (
-              users.map((user) => {
-                const lastLogin =
-                  user.loginHistory && user.loginHistory.length > 0
-                    ? `${new Date(
-                        user.loginHistory[user.loginHistory.length - 1].timestamp
-                      ).toLocaleString()} | Device: ${
-                        user.loginHistory[user.loginHistory.length - 1].deviceType || "Unknown"
-                      } | IP: ${user.loginHistory[user.loginHistory.length - 1].ip || "N/A"}`
-                    : "N/A";
+              filteredUsers.map((user) => {
+                const lastLogin = user.loginHistory?.length
+                  ? `${new Date(
+                      user.loginHistory[user.loginHistory.length - 1].timestamp
+                    ).toLocaleString()} | Device: ${
+                      user.loginHistory[user.loginHistory.length - 1].deviceType || "Unknown"
+                    } | IP: ${user.loginHistory[user.loginHistory.length - 1].ip || "N/A"}`
+                  : "N/A";
 
                 return (
                   <TableRow key={user._id}>
-                    {[
-                      user.employeeId,
-                      user.fullName,
-                      user.email,
-                      user.contactNo,
-                      user.teamLeader,
-                      user.designation,
+                    <TableCell>{user.employeeId}</TableCell>
+                    <TableCell>{user.fullName}</TableCell>
+                    <TableCell>{user.email}</TableCell>
+                    <TableCell>{user.contactNo}</TableCell>
+                    <TableCell>{user.teamLeader}</TableCell>
+                    <TableCell>{user.designation}</TableCell>
+                    <TableCell>
                       <Button
                         variant="contained"
                         onClick={() => handleApprove(user._id)}
@@ -193,7 +249,10 @@ const UserList = () => {
                         }}
                       >
                         {user.isApproved ? "Approved" : "Approve"}
-                      </Button>,
+                      </Button>
+                    </TableCell>
+
+                    <TableCell>
                       <Button
                         variant="contained"
                         onClick={() => handleToggleStatus(user._id)}
@@ -203,17 +262,52 @@ const UserList = () => {
                         }}
                       >
                         {user.isBlocked ? "Inactive" : "Active"}
-                      </Button>,
-                      user.isApproved && user.approvedAt
+                      </Button>
+                    </TableCell>
+
+                    <TableCell>
+                      <Box
+                        sx={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          gap: "6px",
+                        }}
+                      >
+                        <Box
+                          sx={{
+                            width: 10,
+                            height: 10,
+                            borderRadius: "50%",
+                            backgroundColor: user.isOnline ? "green" : "gray",
+                          }}
+                        />
+                        {user.isOnline ? "Online" : "Offline"}
+                      </Box>
+                    </TableCell>
+
+                    <TableCell>
+                      {user.isApproved && user.approvedAt
                         ? new Date(user.approvedAt).toLocaleDateString()
-                        : "Pending",
-                      lastLogin,
-                      <IconButton onClick={() => handleDelete(user._id)} color="error">
+                        : "Pending"}
+                    </TableCell>
+
+                    <TableCell>{lastLogin}</TableCell>
+
+                    <TableCell>
+                      <IconButton color="primary" onClick={() => handleEditOpen(user)}>
+                        <Edit />
+                      </IconButton>
+                      <IconButton
+                        color="error"
+                        onClick={() => {
+                          setUserToDelete(user);
+                          setDeleteDialogOpen(true);
+                        }}
+                      >
                         <Delete />
-                      </IconButton>,
-                    ].map((cell, index) => (
-                      <TableCell key={index}>{cell}</TableCell>
-                    ))}
+                      </IconButton>
+                    </TableCell>
                   </TableRow>
                 );
               })
@@ -221,6 +315,63 @@ const UserList = () => {
           </TableBody>
         </Table>
       </TableContainer>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
+        <DialogTitle>Are you sure you want to delete this user?</DialogTitle>
+        <DialogContent>
+          <Typography>{userToDelete?.fullName}</Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
+          <Button color="error" variant="contained" onClick={handleDelete}>
+            OK
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Edit User Dialog */}
+      <Dialog open={editDialogOpen} onClose={() => setEditDialogOpen(false)}>
+        <DialogTitle>Edit User Details</DialogTitle>
+        <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
+          <TextField
+            label="Full Name"
+            value={editForm.fullName}
+            onChange={(e) => setEditForm({ ...editForm, fullName: e.target.value })}
+            fullWidth
+          />
+          <TextField
+            label="Email"
+            value={editForm.email}
+            onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+            fullWidth
+          />
+          <TextField
+            label="Contact No"
+            value={editForm.contactNo}
+            onChange={(e) => setEditForm({ ...editForm, contactNo: e.target.value })}
+            fullWidth
+          />
+          <TextField
+            label="Designation"
+            value={editForm.designation}
+            onChange={(e) => setEditForm({ ...editForm, designation: e.target.value })}
+            fullWidth
+          />
+          <TextField
+            label="Team Leader"
+            value={editForm.teamLeader}
+            onChange={(e) => setEditForm({ ...editForm, teamLeader: e.target.value })}
+            fullWidth
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setEditDialogOpen(false)}>Cancel</Button>
+          <Button variant="contained" color="primary" onClick={handleEditSave}>
+            Save Changes
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Paper>
   );
 };
